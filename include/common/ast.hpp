@@ -176,6 +176,7 @@ struct ASTConstDef : ASTNode
     std::vector<std::shared_ptr<ASTAddExp>> RConstExps;
     std::vector<std::string> info;
 };
+
 struct ASTVarDef : ASTNode
 {
     virtual Value *accept(ASTVisitor &) override final;
