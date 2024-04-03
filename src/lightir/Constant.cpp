@@ -82,11 +82,10 @@ ConstantArray *ConstantArray::get(ArrayType *ty,
 {
     return new ConstantArray(ty, val);
 }
-
+/*
 std::string ConstantArray::print()
 {
-    std::string const_ir;
-   // const_ir += this->get_type()->print();
+    std::string const_ir; 
     const_ir += " ";
     const_ir += "[";
     for (unsigned i = 0; i < this->get_size_of_array(); i++)
@@ -101,6 +100,22 @@ std::string ConstantArray::print()
         {
             const_ir += ", ";
         }
+    }
+    const_ir += "]";
+    return const_ir;
+}*/
+std::string ConstantArray::print()
+{
+    std::string const_ir;
+    const_ir += "[";
+    const_ir += this->get_type()->get_array_element_type()->print();
+    const_ir += " ";
+    const_ir += get_element_value(0)->print();
+    for ( int i = 1 ; i < this->get_size_of_array() ; i++ ){
+        const_ir += ", ";
+        const_ir += this->get_type()->get_array_element_type()->print();
+        const_ir += " ";
+        const_ir += get_element_value(i)->print();
     }
     const_ir += "]";
     return const_ir;

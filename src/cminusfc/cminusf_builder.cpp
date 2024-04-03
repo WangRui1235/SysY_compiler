@@ -556,7 +556,156 @@ Value *CminusfBuilder::visit(ASTBreakStmt &node)
 {
     return builder->create_br(nextBB_while);
 }
+/*
+void assignInitVal(AllocaInst *alloca, Type *lValType, bool isConstant, InitItem initVal, IRStmtBuilder *builder, Module *module, bool firsttime)
+{
+    if (firsttime)
+    {
+        depth = 0;
+        indexMax.clear();
+        indexList.clear();
+        realType = lValType;
+        while (realType->is_array_type())
+        {
+            indexMax.push_back(((ArrayType *)realType)->get_num_of_elements());
+            indexList.push_back(0);
+            realType = realType->get_array_element_type();
+        }
+        if (alloca != NULL && lValType->is_array_type()) // 局部变量置0
+        {
+            tmpfor0.clear();
+            tmpfor0.push_back(ConstantInt::get(0, module));
+            SetZero(alloca, 0, builder, module);
+        }
+        if (isConstant) // 要处理常数
+        {
+            int totalnum = 1;
+            for (int i = 0; i < indexMax.size(); i++)
+            {
+                totalnum *= indexMax[i];
+            }
+            tmpforconst = (Constant **)realloc(tmpforconst, sizeof(Constant *) * totalnum); // 分配参数暂存空间
+            for (int i = 0; i < totalnum; i++)
+            {
+                tmpforconst[i] = ConstantZero::get(realType, module);
+            }
+        }
+    }
+    // 如果是常数，要返回constant*给外面的函数用
+    if (!initVal.isValue) // 是数组，递归操作
+    {
+        depth++;
+        for (unsigned int i = 0; i < initVal.list.size(); i++)
+        {
+            int beforepos = indexList[depth - 1];
+            assignInitVal(alloca, lValType->get_array_element_type(), isConstant, initVal.list[i], builder, module, false);
 
+            bool upmatch = false;
+            if (beforepos == indexList[depth - 1])
+                upmatch = true;
+            else
+                for (auto j = depth; j < indexList.size(); j++)
+                {
+                    if (indexList[j] != 0)
+                    {
+                        upmatch = true;
+                        break;
+                    }
+                }
+            if (initVal.list[i].isValue)
+                upmatch = false;
+            if (upmatch)
+            {
+                for (auto j = depth; j < indexList.size(); j++)
+                {
+                    indexList[j] = 0;
+                }
+                for (auto j = depth - 1;; j--)
+                {
+                    indexList[j]++;
+                    if (j > 0 && indexList[j] == indexMax[j])
+                        indexList[j] = 0;
+                    else
+                        break;
+                }
+            }
+        }
+        depth--;
+    }
+    else // 不是数组，直接赋值
+    {
+        if (depth < indexMax.size()) // 给的初始值深度不够，自动加深
+        {
+            depth++;
+            assignInitVal(alloca, lValType->get_array_element_type(), isConstant, initVal, builder, module, false);
+            depth--;
+            return;
+        }
+
+        if (alloca != NULL) // 非空说明是局部变量，要
+        {
+            if (alloca->get_type()->get_pointer_element_type()->is_array_type()) // 是数组，要先取指针
+            {
+                std::vector<Value *> indexListforGep;
+                indexListforGep.push_back(ConstantInt::get(0, module));
+                for (std::size_t i = 0; i < indexList.size(); i++)
+                {
+                    indexListforGep.push_back(ConstantInt::get(indexList[i], module));
+                }
+                auto aGep = builder->create_gep(alloca, indexListforGep);
+                Assign(aGep, initVal.expr, builder);
+            }
+            else
+                Assign(alloca, initVal.expr, builder);
+        }
+        Constant *tmp;
+        if (isConstant)
+        {
+
+            // float=int
+            if (dynamic_cast<ConstantInt *>(initVal.expr) && lValType == FLOAT_T)
+            {
+                int val = ((ConstantInt *)initVal.expr)->get_value();
+                tmp = ConstantFloat::get((float)val, module);
+            }
+            // int=float
+            else if (dynamic_cast<ConstantFloat *>(initVal.expr) && lValType == INT32_T)
+            {
+                float val = ((ConstantFloat *)initVal.expr)->get_value();
+                tmp = ConstantInt::get((int)val, module);
+            }
+            else
+            {
+                tmp = (Constant *)initVal.expr;
+            }
+            int pos = 0;
+            for (int i = 0; i < indexMax.size(); i++)
+            {
+                pos *= indexMax[i];
+                pos += indexList[i];
+            }
+            tmpforconst[pos] = tmp;
+        }
+        // 处理成功，下标++
+        if (depth > 0)
+        {
+            for (auto j = depth; j < indexList.size(); j++)
+            {
+                indexList[j] = 0;
+            }
+            for (auto j = depth - 1;; j--)
+            {
+                indexList[j]++;
+                if (j > 0 && indexList[j] == indexMax[j])
+                    indexList[j] = 0;
+                else
+                    break;
+            }
+        }
+        // 处理成功，下标++ end
+    }
+}
+*/
 Value *CminusfBuilder::visit(ASTVarDef &node)
 {
     Type *var_type = module->get_int32_type();
@@ -639,8 +788,9 @@ Value *CminusfBuilder::visit(ASTVarDef &node)
         }
         else
         {
-            // 计算数组大小
             std::vector<int> array_size;
+
+            
             for (auto &expr : node.ConstExps)
             {
                 auto *expr_result = expr->accept(*this);
@@ -744,7 +894,7 @@ Value *CminusfBuilder::visit(ASTInitVal &node)
 {
     if (node.expression == nullptr)
     {
-        // '{' [ InitVal { ',' InitVal } ] '}'
+
         Value *ret_val = nullptr;
         for (auto &init_val : node.init_vals)
         {

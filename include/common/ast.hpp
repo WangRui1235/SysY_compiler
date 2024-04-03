@@ -67,23 +67,23 @@ enum UnaryOp
     //+
     OP_POS
 };
-class AST; 
+class AST;
 struct ASTSTARTPOINT;
 struct ASTCompUnit;
 struct ASTDecl;
 struct ASTConstDecl;
 struct ASTBType;
-struct ASTConstDef; 
+struct ASTConstDef;
 struct ASTVarDecl;
 struct ASTVarDef;
 struct ASTInitVal;
 struct ASTFuncDef;
 struct ASTFuncType;
 struct ASTStmt;
-struct ASTExp; 
-struct ASTLVal; 
+struct ASTExp;
+struct ASTLVal;
 struct ASTNumber;
-struct ASTUnaryExp; 
+struct ASTUnaryExp;
 struct ASTFuncRParams;
 struct ASTMulExp;
 struct ASTAddExp;
@@ -98,7 +98,7 @@ struct ASTEmptyStmt;
 struct ASTIfStmt;
 struct ASTWhileStmt;
 struct ASTAssignExpression;
-struct ASTExpStmt; 
+struct ASTExpStmt;
 struct ASTFuncFParam;
 struct ASTNode;
 struct ASTBlock;
@@ -120,7 +120,6 @@ public:
     void functionb(_syntax_tree_node *n_info, ASTVarDef *node);
     ASTNode *transform_node_iter(syntax_tree_node *);
     std::shared_ptr<ASTSTARTPOINT> root = nullptr;
-
 };
 
 struct ASTNode
@@ -129,7 +128,6 @@ struct ASTNode
     virtual ~ASTNode() = default;
 };
 
- 
 struct ASTSTARTPOINT : ASTNode
 {
     virtual Value *accept(ASTVisitor &) override;
@@ -149,7 +147,6 @@ struct ASTDecl : ASTCompUnit
     virtual ~ASTDecl() = default;
     SysYType type;
     std::string id;
-    
 };
 
 struct ASTConstDecl : ASTDecl
@@ -174,23 +171,21 @@ struct ASTConstDef : ASTNode
 {
     virtual Value *accept(ASTVisitor &) override final;
     virtual ~ASTConstDef() = default;
-    std::string id; 
+    std::string id;
     std::vector<std::shared_ptr<ASTAddExp>> ConstExps;
     std::vector<std::shared_ptr<ASTAddExp>> RConstExps;
-    std::vector< std::string> info;
+    std::vector<std::string> info;
 };
- struct ASTVarDef : ASTNode
+struct ASTVarDef : ASTNode
 {
     virtual Value *accept(ASTVisitor &) override final;
     virtual ~ASTVarDef() = default;
     std::string id;
-    SysYType type; 
+    SysYType type;
     std::vector<std::shared_ptr<ASTAddExp>> ConstExps;
     std::vector<std::shared_ptr<ASTAddExp>> RConstExps;
-    std::vector< std::string> info;
+    std::vector<std::string> info;
 };
-
-
 
 struct ASTVarDecl : ASTDecl
 {
@@ -199,7 +194,6 @@ struct ASTVarDecl : ASTDecl
     SysYType type;
     std::vector<std::shared_ptr<ASTVarDef>> var_defs;
 };
-
 
 struct ASTInitVal : ASTNode
 {
@@ -234,10 +228,8 @@ struct ASTBlock : ASTNode
     virtual Value *accept(ASTVisitor &) override final;
     virtual ~ASTBlock() = default;
     // std::vector<std::shared_ptr<ASTBlockItem>> block_items;
-    std::vector<std::shared_ptr<ASTDecl>> Decls;  
+    std::vector<std::shared_ptr<ASTDecl>> Decls;
 };
-
- 
 
 struct ASTStmt : ASTDecl
 {
@@ -277,7 +269,7 @@ struct ASTWhileStmt : ASTStmt
     virtual Value *accept(ASTVisitor &) override final;
     std::shared_ptr<ASTLOrExp> expression;
     std::shared_ptr<ASTStmt> statement;
-    int break_exist=0;
+    int break_exist = 0;
 };
 
 struct ASTBreakStmt : ASTStmt
@@ -302,7 +294,6 @@ struct ASTExp : ASTNode
     virtual ~ASTExp() = default;
 };
 
- 
 struct ASTLVal : ASTNode
 {
     virtual Value *accept(ASTVisitor &) override final;
@@ -310,8 +301,6 @@ struct ASTLVal : ASTNode
     std::string id;
     std::vector<std::shared_ptr<ASTExp>> Exps;
 };
-
- 
 
 struct ASTNumber : ASTNode
 {
@@ -329,15 +318,14 @@ struct ASTUnaryExp : ASTNode
     virtual Value *accept(ASTVisitor &) override final;
     virtual ~ASTUnaryExp() = default;
     std::string id;
-    UnaryOp  unary_op;
+    UnaryOp unary_op;
     std::shared_ptr<ASTUnaryExp> unary_exp;
     std::shared_ptr<ASTLVal> lval;
     std::shared_ptr<ASTExp> exp;
-     std::shared_ptr<ASTNumber> number; 
+    std::shared_ptr<ASTNumber> number;
     std::vector<std ::shared_ptr<ASTExp>> args;
 };
 
- 
 struct ASTFuncRParams : ASTNode
 {
     virtual Value *accept(ASTVisitor &) override final;
@@ -402,7 +390,7 @@ class ASTVisitor
 public:
     virtual Value *visit(ASTSTARTPOINT &) = 0;
     virtual Value *visit(ASTCompUnit &) = 0;
-    virtual Value *visit(ASTConstDecl &) = 0; 
+    virtual Value *visit(ASTConstDecl &) = 0;
     virtual Value *visit(ASTConstDef &) = 0;
     virtual Value *visit(ASTVarDecl &) = 0;
     virtual Value *visit(ASTVarDef &) = 0;
@@ -417,9 +405,9 @@ public:
     virtual Value *visit(ASTReturnStmt &) = 0;
     virtual Value *visit(ASTEmptyStmt &) = 0;
     virtual Value *visit(ASTAssignExpression &) = 0;
-     
+
     virtual Value *visit(ASTLVal &) = 0;
-   
+
     virtual Value *visit(ASTNumber &) = 0;
     virtual Value *visit(ASTUnaryExp &) = 0;
 
@@ -429,7 +417,6 @@ public:
     virtual Value *visit(ASTEqExp &) = 0;
     virtual Value *visit(ASTLAndExp &) = 0;
     virtual Value *visit(ASTLOrExp &) = 0;
-     
 };
 
 class ASTPrinter : public ASTVisitor
@@ -438,7 +425,7 @@ public:
     virtual Value *visit(ASTSTARTPOINT &) override final;
     virtual Value *visit(ASTCompUnit &) override final;
     virtual Value *visit(ASTConstDecl &) override final;
-    virtual Value *visit(ASTConstDef &) override final; 
+    virtual Value *visit(ASTConstDef &) override final;
     virtual Value *visit(ASTVarDecl &) override final;
     virtual Value *visit(ASTVarDef &) override final;
     virtual Value *visit(ASTInitVal &) override final;
@@ -452,9 +439,9 @@ public:
     virtual Value *visit(ASTReturnStmt &) override final;
     virtual Value *visit(ASTEmptyStmt &) override final;
     virtual Value *visit(ASTAssignExpression &) override final;
-  
+
     virtual Value *visit(ASTLVal &) override final;
-  
+
     virtual Value *visit(ASTNumber &) override final;
     virtual Value *visit(ASTUnaryExp &) override final;
     virtual Value *visit(ASTMulExp &) override final;
@@ -463,7 +450,6 @@ public:
     virtual Value *visit(ASTEqExp &) override final;
     virtual Value *visit(ASTLAndExp &) override final;
     virtual Value *visit(ASTLOrExp &) override final;
-    
 
     void add_depth() { depth += 2; }
     void remove_depth() { depth -= 2; }
