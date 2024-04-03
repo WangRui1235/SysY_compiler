@@ -70,11 +70,8 @@ enum UnaryOp
 class AST;
 struct ASTSTARTPOINT;
 struct ASTCompUnit;
-struct ASTDecl;
-struct ASTConstDecl;
-struct ASTBType;
-struct ASTConstDef;
-struct ASTVarDecl;
+struct ASTDecl; 
+struct ASTBType;  
 struct ASTVarDef;
 struct ASTInitVal;
 struct ASTFuncDef;
@@ -116,8 +113,7 @@ public:
     };
     ASTSTARTPOINT *get_root() { return root.get(); }
     void run_visitor(ASTVisitor &visitor);
-    void functiona(_syntax_tree_node *n_info, ASTConstDef *node);
-    void functionb(_syntax_tree_node *n_info, ASTVarDef *node);
+
     ASTNode *transform_node_iter(syntax_tree_node *);
     std::shared_ptr<ASTSTARTPOINT> root = nullptr;
 };
@@ -141,60 +137,29 @@ struct ASTCompUnit : ASTNode
     virtual ~ASTCompUnit() = default;
     std::vector<std::shared_ptr<ASTCompUnit>> comp_units;
 };
-
-struct ASTDecl : ASTCompUnit
+ 
+ 
+struct ASTFuncDef : ASTCompUnit
 {
-    virtual ~ASTDecl() = default;
     SysYType type;
     std::string id;
+    virtual Value *accept(ASTVisitor &) override final;
+    std::vector<std::shared_ptr<ASTFuncFParam>> params;
+    std::shared_ptr<ASTBlock> block;
 };
 
-struct ASTConstDecl : ASTDecl
+struct ASTVarDef : ASTCompUnit
 {
-    virtual ~ASTConstDecl() = default;
-    virtual Value *accept(ASTVisitor &) override final;
-    SysYType type;
-    std::vector<std::shared_ptr<ASTConstDef>> const_defs;
-};
-/*
-ConstInitVal 初始化器必须是以下三种情况之一：
-a) 一对花括号 {}，表示所有元素初始为 0。
-b) 与多维数组中数组维数和各维长度完全对应的初始值，如{{1,2},{3,4},
-{5,6}}、{1,2,3,4,5,6}、{1,2,{3,4},5,6}均可作为 a[3][2]的初始值。
-c) 如果花括号括起来的列表中的初始值少于数组中对应维的元素个数，则
-该维其余部分将被隐式初始化，需要被隐式初始化的整型元素均初始为
-0，如{{1, 2},{3}, {5}}、{1,2,{3},5}、{{},{3,4},5,6}均可作为 a[3][2]的初
-始值，前两个将 a 初始化为{{1, 2},{3,0}, {5,0}}，{{},{3,4},5,6}将 a 初始
-化为{{0,0},{3,4},{5,6}}。
-*/
-struct ASTConstDef : ASTNode
-{
-    virtual Value *accept(ASTVisitor &) override final;
-    virtual ~ASTConstDef() = default;
-    std::string id;
-    std::vector<std::shared_ptr<ASTAddExp>> ConstExps;
-    std::vector<std::shared_ptr<ASTAddExp>> RConstExps;
-    std::vector<std::string> info;
-};
-
-struct ASTVarDef : ASTNode
-{
+    bool is_constant;
+    bool is_init;
     virtual Value *accept(ASTVisitor &) override final;
     virtual ~ASTVarDef() = default;
+    SysYType type;
     std::string id;
-    SysYType type;
-    std::vector<std::shared_ptr<ASTAddExp>> ConstExps;
-    std::vector<std::shared_ptr<ASTAddExp>> RConstExps;
-    std::vector<std::string> info;
+    std::vector<std::shared_ptr<ASTAddExp>> arr_len;
+    std::shared_ptr<ASTInitVal> init_val;
 };
-
-struct ASTVarDecl : ASTDecl
-{
-    virtual ~ASTVarDecl() = default;
-    virtual Value *accept(ASTVisitor &) override final;
-    SysYType type;
-    std::vector<std::shared_ptr<ASTVarDef>> var_defs;
-};
+ 
 
 struct ASTInitVal : ASTNode
 {
@@ -205,14 +170,7 @@ struct ASTInitVal : ASTNode
     std::vector<std::shared_ptr<ASTInitVal>> init_vals;
 };
 
-struct ASTFuncDef : ASTCompUnit
-{
-    SysYType type;
-    std::string id;
-    virtual Value *accept(ASTVisitor &) override final;
-    std::vector<std::shared_ptr<ASTFuncFParam>> params;
-    std::shared_ptr<ASTBlock> block;
-};
+
 
 struct ASTFuncFParam : ASTNode
 {
@@ -232,7 +190,7 @@ struct ASTBlock : ASTNode
     std::vector<std::shared_ptr<ASTDecl>> Decls;
 };
 
-struct ASTStmt : ASTDecl
+struct ASTStmt : ASTNode
 {
     std::string type;
     virtual ~ASTStmt() = default;
@@ -390,10 +348,7 @@ class ASTVisitor
 {
 public:
     virtual Value *visit(ASTSTARTPOINT &) = 0;
-    virtual Value *visit(ASTCompUnit &) = 0;
-    virtual Value *visit(ASTConstDecl &) = 0;
-    virtual Value *visit(ASTConstDef &) = 0;
-    virtual Value *visit(ASTVarDecl &) = 0;
+    virtual Value *visit(ASTCompUnit &) = 0;  
     virtual Value *visit(ASTVarDef &) = 0;
     virtual Value *visit(ASTInitVal &) = 0;
     virtual Value *visit(ASTFuncDef &) = 0;
@@ -424,10 +379,7 @@ class ASTPrinter : public ASTVisitor
 {
 public:
     virtual Value *visit(ASTSTARTPOINT &) override final;
-    virtual Value *visit(ASTCompUnit &) override final;
-    virtual Value *visit(ASTConstDecl &) override final;
-    virtual Value *visit(ASTConstDef &) override final;
-    virtual Value *visit(ASTVarDecl &) override final;
+    virtual Value *visit(ASTCompUnit &) override final;  
     virtual Value *visit(ASTVarDef &) override final;
     virtual Value *visit(ASTInitVal &) override final;
     virtual Value *visit(ASTFuncDef &) override final;

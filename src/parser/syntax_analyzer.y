@@ -37,7 +37,7 @@ syntax_tree_node *node(const char *node_name, int children_num, ...);
 
 /* TODO: Your tokens here. */
 %token <node> ERROR ADD SUB MUL EXC DIV LT LTE GT GTE EQ NEQ ASSIGN SEMICOLON COMMA LPAREN RPAREN LBRACKET RBRACKET LBRACE RBRACE ELSE IF INT RETURN VOID WHILE FLOAT PER Ident IntConst FloatConst BREAK CONST CONTINUE OR AND
-%type <node>  STARTPOINT CompUnit Decl ConstDecl ComConstDef  ConstDef ConstInitVal ConstInitValList VarDecl ComVarDef VarDef ConstExplist InitVal InitValList FuncDef FuncFParams FuncFParam FuncFParamlist Explist BlockItemList ComExp Block BlockItem Stmt Exp Cond LVal PrimaryExp UnaryExp UnaryOp FuncRParams MulExp AddExp RelExp EqExp LAndExp LOrExp ConstExp
+%type <node>  STARTPOINT CompUnit Decl ConstDecl VarDefList VarDecl  VarDef ConstExplist InitVal InitValList FuncDef FuncFParams FuncFParam FuncFParamlist Explist BlockItemList ComExp Block BlockItem Stmt Exp Cond LVal PrimaryExp UnaryExp UnaryOp FuncRParams MulExp AddExp RelExp EqExp LAndExp LOrExp  
 
 %start STARTPOINT
 
@@ -80,94 +80,54 @@ Decl: ConstDecl
     $$ = node("Decl",  1, $1);
 }
 
-ConstDecl: CONST INT ConstDef ComConstDef SEMICOLON
+ConstDecl: CONST INT VarDefList SEMICOLON
 {
-    $$ = node("ConstDecl", 5, $1, $2, $3, $4, $5);
+    $$ = node("ConstDecl", 4, $1, $2, $3, $4);
 }
-| CONST FLOAT ConstDef ComConstDef SEMICOLON
+| CONST FLOAT VarDefList SEMICOLON
 {
-    $$ = node("ConstDecl", 5, $1, $2, $3, $4, $5);
+    $$ = node("ConstDecl", 4, $1, $2, $3, $4);
 }
-
-ComConstDef: COMMA ConstDef ComConstDef
-{
-    $$ = node("ComConstDef", 3, $1, $2, $3);
-}
-| 
-{
-    $$ = node("ComConstDef", 0);
-}
-
-
-
-ConstDef: Ident ASSIGN ConstInitVal
-{
-    $$ = node("ConstDef", 3, $1, $2, $3);
-}
-|Ident ConstExplist ASSIGN ConstInitVal
-{
-    $$ = node("ConstDef",  4, $1, $2, $3, $4);
-}
-
+ 
 VarDef: Ident ConstExplist
 {
     $$ = node("VarDef", 2, $1, $2);
 }
-| Ident
-{
-    $$ = node("VarDef", 1, $1);
-}
 | Ident ConstExplist ASSIGN InitVal
 {
     $$ = node("VarDef", 4, $1, $2, $3, $4);
-}
-| Ident ASSIGN InitVal
+} 
+
+VarDecl: INT VarDefList SEMICOLON
 {
-    $$ = node("VarDef", 3, $1, $2, $3);
+    $$ = node("VarDecl", 3, $1, $2, $3);
 }
-
-VarDecl: INT VarDef ComVarDef SEMICOLON
+| FLOAT VarDefList SEMICOLON
 {
-    $$ = node("VarDecl", 4, $1, $2, $3, $4);
+    $$ = node("VarDecl", 3, $1, $2, $3);
 }
-| FLOAT VarDef ComVarDef SEMICOLON
+
+VarDefList:VarDefList COMMA VarDef
 {
-    $$ = node("VarDecl", 4, $1, $2, $3, $4);
+    $$ = node("VarDefList", 3, $1, $2, $3);
 }
-
-
-ComVarDef: COMMA VarDef ComVarDef
+| VarDef
 {
-    $$ = node("ComVarDef", 3, $1, $2, $3);
-}
-|
-{
-    $$ = node("ComVarDef", 0);
+    $$ = node("VarDefList", 1, $1);
 }
 
 
 
-ConstExplist:  LBRACKET ConstExp RBRACKET ConstExplist
+
+ConstExplist:  ConstExplist LBRACKET AddExp RBRACKET 
 {
     $$ = node("ConstExplist", 4, $1, $2, $3, $4);
 }
-| LBRACKET ConstExp RBRACKET
+|   
 {
-    $$ = node("ConstExplist",  3, $1, $2, $3);
+    $$ = node("ConstExplist",  0);
 }
-
-ConstInitVal: ConstExp
-{
-    $$ = node("ConstInitVal", 1, $1);
-}
-| LBRACE RBRACE
-{
-    $$ = node("ConstInitVal", 2, $1, $2);
-}
-|   LBRACE ConstInitValList RBRACE
-{
-    $$ = node("ConstInitVal", 3, $1, $2, $3);
-}
+ 
 
 InitVal: Exp
 {
@@ -181,15 +141,7 @@ InitVal: Exp
 {
     $$ = node("InitVal", 3, $1, $2, $3);
 } 
-
-ConstInitValList: ConstInitVal COMMA ConstInitValList
-{
-    $$ = node("ConstInitValList", 3, $1, $2, $3);
-}
-| ConstInitVal
-{
-    $$ = node("ConstInitValList", 1, $1);
-}
+ 
 
 InitValList: InitVal  COMMA InitValList 
 {
@@ -491,11 +443,7 @@ LOrExp:  LAndExp
 {
     $$ = node("LOrExp",3, $1, $2, $3); 
 }
-
-ConstExp: AddExp
-{
-    $$ = node("ConstExp",1, $1);
-}
+ 
 %%
 
 /// The error reporting function.

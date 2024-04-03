@@ -79,13 +79,13 @@ ASTNode *AST::transform_node_iter(syntax_tree_node *n)
     }
     else if (_STR_EQ(n->name, "ConstDecl"))
     {
-        auto node = new ASTConstDecl();           // 声明一下这个-->e.g. CONST INT num_a[100]=10,num_b[50]=9;)
-        if (_STR_EQ(n->children[1]->name, "INT")) // num_a,num_b即IDENT
-            node->type = TYPE_CONSTINT;           // BTYPE分为INT，FLOAT(const类型):怎么处理const?是否定义CONSTINT,CONSTFLOAT?
+        auto node = new ASTVarDecl();
+        if (_STR_EQ(n->children[1]->name, "INT"))
+            node->type = TYPE_CONSTINT;
         else
-            node->type = TYPE_CONSTFLOAT; // 建议可以定义一下
-        std::queue<syntax_tree_node *> q; // ConstDef队列
-        q.push(n->children[2]);           // 存ConstDef:再声明下ASTConstDef:shared_ptr
+            node->type = TYPE_CONSTFLOAT;
+        std::queue<syntax_tree_node *> q;
+        q.push(n->children[2]);
 
         auto list_ptr = n->children[3]; // ComConstDef
         while (list_ptr->children_num == 3)
@@ -96,140 +96,31 @@ ASTNode *AST::transform_node_iter(syntax_tree_node *n)
         // 建立一个ConstSymtable成员变量,进行存储ConstDef形式的push_back
         while (!q.empty())
         {
-            auto child_node = static_cast<ASTConstDef *>(transform_node_iter(q.front())); // “先进”
-            auto child_node_shared = std::shared_ptr<ASTConstDef>(child_node);
+            auto child_node = static_cast<ASTVarDef *>(transform_node_iter(q.front()));
+            auto child_node_shared = std::shared_ptr<ASTVarDef>(child_node);
             node->const_defs.push_back(child_node_shared);
             q.pop();
         }
         return node;
     }
-    else if (_STR_EQ(n->name, "ConstDef"))
-    {
-        auto node = new ASTConstDef();
-        node->id = n->children[0]->name;
 
-        if (n->children_num == 3)
-        {
-            auto temp = n->children[2];
-
-            while (temp->children_num == 1)
-            {
-                temp = temp->children[0];
-            }
-
-            ConstMap.insert(std::make_pair(node->id, temp->name));
-        }
-        if (n->children_num == 4)
-        {
-            auto list_ptr = n->children[1];
-            std::queue<syntax_tree_node *> q;
-            while (list_ptr->children_num == 4)
-            {
-                q.push(list_ptr->children[1]);
-                list_ptr = list_ptr->children[3];
-            }
-
-            q.push(list_ptr->children[1]);
-
-            while (!q.empty())
-            {
-                auto child_node = static_cast<ASTAddExp *>(transform_node_iter(q.front()));
-                auto child_node_shared = std::shared_ptr<ASTAddExp>(child_node);
-                node->ConstExps.push_back(child_node_shared);
-                q.pop();
-            }
-        }
-        // 进行深度优先遍历，把子树信息存进node->info
-        auto n_info = n->children[n->children_num - 1]; // n_info是ConstInitVal
-        functiona(n_info, node);
-        return node;
-    }
-
+    /*
+    VarDef: Ident ConstExplist
+    | Ident
+    | Ident ConstExplist ASSIGN InitVal
+    | Ident ASSIGN InitVal
+    */
     else if (_STR_EQ(n->name, "VarDef"))
     {
         auto node = new ASTVarDef();
         node->id = n->children[0]->name;
-
-        if (n->children_num == 2 || n->children_num == 4)
-        {
-            auto temp = n->children[1]->children[1];
-            auto temp_father = temp;
-            while (temp->children_num == 1)
-            {
-                temp_father = temp;
-                temp = temp->children[0];
-            }
-            if (_STR_EQ(temp->name, "LVal"))
-            {
-                std::string tname = temp->children[0]->name;
-                if (ConstMap.find(tname) != ConstMap.end())
-                {
-                    auto val_name = ConstMap[tname];
-                    //  del_syntax_tree_node(temp,1);
-                    
-                    del_syntax_tree_node(temp->children[0], 1);
-                    del_syntax_tree_node(temp->children[1], 1);
-                    // 把孩子的name改成val_name
-                    auto name =  val_name.c_str();
-                    if (name)
-                        strncpy(temp->name, name, SYNTAX_TREE_NODE_NAME_MAX);
-                    temp->children_num = 0;
-                    //   syntax_tree_node *number_node = new_syntax_tree_node(val_name.c_str());
-                    //     syntax_tree_add_child(temp_father,number_node);
-                }
-            }
-        }
-
         if (n->children_num == 1)
         {
             return node;
         }
-
         if (n->children_num == 2)
         {
-            auto list_ptr = n->children[1];
-            std::queue<syntax_tree_node *> q;
-            while (list_ptr->children_num == 4)
-            {
-                q.push(list_ptr->children[1]);
-                list_ptr = list_ptr->children[3];
-            }
-
-            q.push(list_ptr->children[1]);
-
-            while (!q.empty())
-            {
-                auto child_node = static_cast<ASTAddExp *>(transform_node_iter(q.front()));
-                auto child_node_shared = std::shared_ptr<ASTAddExp>(child_node);
-                node->ConstExps.push_back(child_node_shared);
-                q.pop();
-            }
-
-            return node;
         }
-        if (n->children_num == 4)
-        {
-            auto list_ptr = n->children[1];
-            std::queue<syntax_tree_node *> q;
-            while (list_ptr->children_num == 4)
-            {
-                q.push(list_ptr->children[1]);
-                list_ptr = list_ptr->children[3];
-            }
-
-            q.push(list_ptr->children[1]);
-
-            while (!q.empty())
-            {
-                auto child_node = static_cast<ASTAddExp *>(transform_node_iter(q.front()));
-                auto child_node_shared = std::shared_ptr<ASTAddExp>(child_node);
-                node->ConstExps.push_back(child_node_shared);
-                q.pop();
-            }
-        }
-        // 进行深度优先遍历，把子树信息存进node->info
-        auto n_info = n->children[n->children_num - 1]; // n_info是ConstInitVal
-        functionb(n_info, node);
         return node;
     }
     else if (_STR_EQ(n->name, "VarDecl"))
@@ -726,10 +617,7 @@ ASTNode *AST::transform_node_iter(syntax_tree_node *n)
 }
 Value *ASTSTARTPOINT::accept(ASTVisitor &visitor) { return visitor.visit(*this); }
 Value *ASTCompUnit::accept(ASTVisitor &visitor) { return visitor.visit(*this); }
-Value *ASTConstDef ::accept(ASTVisitor &visitor) { return visitor.visit(*this); }
 Value *ASTFuncDef ::accept(ASTVisitor &visitor) { return visitor.visit(*this); }
-Value *ASTConstDecl::accept(ASTVisitor &visitor) { return visitor.visit(*this); }
-Value *ASTVarDecl::accept(ASTVisitor &visitor) { return visitor.visit(*this); }
 Value *ASTVarDef::accept(ASTVisitor &visitor) { return visitor.visit(*this); }
 Value *ASTInitVal::accept(ASTVisitor &visitor) { return visitor.visit(*this); }
 Value *ASTFuncFParam::accept(ASTVisitor &visitor) { return visitor.visit(*this); }
@@ -789,57 +677,25 @@ Value *ASTPrinter::visit(ASTConstDecl &node)
     return nullptr;
 }
 
-Value *ASTPrinter::visit(ASTConstDef &node)
-{
-    _DEBUG_PRINT_N_(depth);
-    std::cout << "const def" << std::endl;
-    add_depth();
-    std::cout << node.id << std::endl;
-    if (node.ConstExps.size() > 0)
-    {
-        for (auto const_exp : node.ConstExps)
-        {
-            const_exp->accept(*this);
-        }
-    }
-    for (auto const_exp : node.RConstExps)
-    {
-        const_exp->accept(*this);
-    }
-    remove_depth();
-    return nullptr;
-}
-
-Value *ASTPrinter::visit(ASTVarDecl &node)
-{
-    _DEBUG_PRINT_N_(depth);
-    std::cout << "var decl" << std::endl;
-    add_depth();
-    for (auto var_def : node.var_defs)
-    {
-        var_def->accept(*this);
-    }
-    remove_depth();
-    return nullptr;
-}
-
 Value *ASTPrinter::visit(ASTVarDef &node)
 {
     _DEBUG_PRINT_N_(depth);
     std::cout << "var def" << std::endl;
     add_depth();
-    std::cout << node.id << std::endl;
-    if (node.ConstExps.size() > 0)
+    if (node.is_constant)
+        std::cout << "const ";
+    std::cout << node.id;
+    for (auto length : node.arr_len)
     {
-        for (auto const_exp : node.ConstExps)
-        {
-            const_exp->accept(*this);
-        }
+        std::cout << "[";
+        length->accept(*this);
+        std::cout << "]";
     }
-    for (auto const_exp : node.RConstExps)
+    if (node.is_init)
     {
-        const_exp->accept(*this);
+        node.init_val->accept(*this);
     }
+    std::cout << ";" << std::endl;
     remove_depth();
     return nullptr;
 }
@@ -1143,100 +999,4 @@ Value *ASTPrinter::visit(ASTLOrExp &node)
     node.land_exp->accept(*this);
     remove_depth();
     return nullptr;
-}
-void AST::functiona(_syntax_tree_node *n_info, ASTConstDef *node)
-{
-    if (n_info == nullptr)
-    {
-        return;
-    }
-
-    if (_STR_EQ(n_info->name, "ConstInitVal"))
-    {
-        if (n_info->children_num == 1)
-        {
-            auto child_node = std::shared_ptr<ASTAddExp>(static_cast<ASTAddExp *>(transform_node_iter(n_info->children[0]->children[0])));
-            auto child_node_shared = std::shared_ptr<ASTAddExp>(child_node);
-            node->RConstExps.push_back(child_node_shared);
-            node->info.push_back("ConstExp");
-        }
-        else if (n_info->children_num == 2)
-        {
-            node->info.push_back("LBRACE");
-            node->info.push_back("RBRACE");
-        }
-        else
-        {
-            node->info.push_back("LBRACE");
-            auto n_info3 = n_info->children[1];
-            functiona(n_info3, node);
-            node->info.push_back("RBRACE");
-        }
-    }
-
-    else if (_STR_EQ(n_info->name, "ConstInitValList"))
-    {
-        if (n_info->children_num == 1)
-        {
-            n_info = n_info->children[0];
-            functiona(n_info, node);
-        }
-        else if (n_info->children_num == 3)
-        {
-
-            auto n_info1 = n_info->children[0];
-            auto n_info2 = n_info->children[2];
-            functiona(n_info1, node);
-
-            functiona(n_info2, node);
-        }
-    }
-}
-
-void AST::functionb(_syntax_tree_node *n_info, ASTVarDef *node)
-{
-    if (n_info == nullptr)
-    {
-        return;
-    }
-
-    if (_STR_EQ(n_info->name, "InitVal"))
-    {
-        if (n_info->children_num == 1)
-        {
-            auto child_node = std::shared_ptr<ASTAddExp>(static_cast<ASTAddExp *>(transform_node_iter(n_info->children[0]->children[0])));
-            auto child_node_shared = std::shared_ptr<ASTAddExp>(child_node);
-            node->RConstExps.push_back(child_node_shared);
-            node->info.push_back("ConstExp");
-        }
-        else if (n_info->children_num == 2)
-        {
-            node->info.push_back("LBRACE");
-            node->info.push_back("RBRACE");
-        }
-        else
-        {
-            node->info.push_back("LBRACE");
-            auto n_info3 = n_info->children[1];
-            functionb(n_info3, node);
-            node->info.push_back("RBRACE");
-        }
-    }
-
-    else if (_STR_EQ(n_info->name, "InitValList"))
-    {
-        if (n_info->children_num == 1)
-        {
-            n_info = n_info->children[0];
-            functionb(n_info, node);
-        }
-        else if (n_info->children_num == 3)
-        {
-
-            auto n_info1 = n_info->children[0];
-            auto n_info2 = n_info->children[2];
-            functionb(n_info1, node);
-            functionb(n_info2, node);
-        }
-    }
 }
