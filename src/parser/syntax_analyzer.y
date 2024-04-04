@@ -37,7 +37,7 @@ syntax_tree_node *node(const char *node_name, int children_num, ...);
 
 /* TODO: Your tokens here. */
 %token <node> ERROR ADD SUB MUL EXC DIV LT LTE GT GTE EQ NEQ ASSIGN SEMICOLON COMMA LPAREN RPAREN LBRACKET RBRACKET LBRACE RBRACE ELSE IF INT RETURN VOID WHILE FLOAT PER Ident IntConst FloatConst BREAK CONST CONTINUE OR AND
-%type <node>  STARTPOINT CompUnit Decl ConstDecl VarDefList VarDecl  VarDef ConstExplist InitVal InitValList FuncDef FuncFParams FuncFParam FuncFParamlist Explist BlockItemList ComExp Block BlockItem Stmt Exp Cond LVal PrimaryExp UnaryExp UnaryOp FuncRParams MulExp AddExp RelExp EqExp LAndExp LOrExp  
+%type <node>  STARTPOINT CompUnit GlobalDecl ArrayParamList ConstDecl VarDefList VarDecl  VarDef   InitVal InitValList FuncDef FuncFParams FuncFParam FuncFParamlist ArrayExpList BlockItemList ComExp Block BlockItem Stmt Exp Cond LVal PrimaryExp UnaryExp UnaryOp FuncRParams MulExp AddExp RelExp EqExp LAndExp LOrExp  
 
 %start STARTPOINT
 
@@ -52,32 +52,28 @@ STARTPOINT:CompUnit
     gt->root = node("STARTPOINT", 1, $1);
 
 }
-CompUnit:  Decl
+CompUnit: CompUnit GlobalDecl
+{
+    $$ = node("CompUnit",  2  , $1, $2);
+}
+| GlobalDecl
 {
     $$ = node("CompUnit", 1, $1);
 }
-| FuncDef
-{
-    $$ = node("CompUnit", 1, $1);
-}
-| CompUnit Decl
-{
-    $$ = node("CompUnit", 2, $1, $2);
-}
-| CompUnit FuncDef
-{
-    $$ = node("CompUnit", 2, $1, $2);
-}
 
 
 
-Decl: ConstDecl 
+GlobalDecl: ConstDecl 
 {
     $$ = node("Decl", 1, $1);
 }
 | VarDecl
 {
     $$ = node("Decl",  1, $1);
+}
+| FuncDef
+{
+    $$ = node("Decl", 1, $1);
 }
 
 ConstDecl: CONST INT VarDefList SEMICOLON
@@ -89,11 +85,11 @@ ConstDecl: CONST INT VarDefList SEMICOLON
     $$ = node("ConstDecl", 4, $1, $2, $3, $4);
 }
  
-VarDef: Ident ConstExplist
+VarDef: Ident ArrayExpList
 {
     $$ = node("VarDef", 2, $1, $2);
 }
-| Ident ConstExplist ASSIGN InitVal
+| Ident ArrayExpList ASSIGN InitVal
 {
     $$ = node("VarDef", 4, $1, $2, $3, $4);
 } 
@@ -119,13 +115,13 @@ VarDefList:VarDefList COMMA VarDef
 
 
 
-ConstExplist:  ConstExplist LBRACKET AddExp RBRACKET 
+ArrayExpList:  ArrayExpList LBRACKET Exp RBRACKET 
 {
-    $$ = node("ConstExplist", 4, $1, $2, $3, $4);
+    $$ = node("ArrayExpList", 4, $1, $2, $3, $4);
 }
 |   
 {
-    $$ = node("ConstExplist",  0);
+    $$ = node("ArrayExpList",  0);
 }
  
 
@@ -133,17 +129,14 @@ InitVal: Exp
 {
     $$ = node("InitVal", 1, $1);
 }
-| LBRACE RBRACE
-{
-    $$ = node("InitVal", 2, $1, $2);
-}
+ 
 | LBRACE InitValList RBRACE
 {
     $$ = node("InitVal", 3, $1, $2, $3);
 } 
  
 
-InitValList: InitVal  COMMA InitValList 
+InitValList: InitValList  COMMA  InitVal
 {
     $$ = node("InitValList", 3, $1, $2, $3);
 }
@@ -151,20 +144,12 @@ InitValList: InitVal  COMMA InitValList
 {
     $$ = node("InitValList", 1, $1);
 }
+|
+{
+    $$ = node("InitValList", 0);
+}
 
-FuncDef:VOID Ident LPAREN RPAREN Block
-{
-    $$ = node("FuncDef", 5, $1, $2, $3, $4, $5);
-}
-| INT Ident LPAREN RPAREN Block
-{
-    $$ = node("FuncDef", 5, $1, $2, $3, $4, $5);
-}
-|  FLOAT Ident LPAREN RPAREN Block
-{
-    $$ = node("FuncDef", 5, $1, $2, $3, $4, $5);
-}
-|  INT Ident LPAREN FuncFParams RPAREN Block
+FuncDef:   INT Ident LPAREN FuncFParams RPAREN Block
 {
     $$ = node("FuncDef", 6, $1, $2, $3, $4, $5, $6);
 }
@@ -178,18 +163,22 @@ FuncDef:VOID Ident LPAREN RPAREN Block
 }
 
 
-FuncFParams: FuncFParam FuncFParamlist
+FuncFParams:   FuncFParamlist
 {
-    $$ = node("FuncFParams", 2, $1, $2);
+    $$ = node("FuncFParams",  1, $1);
 }
 
-FuncFParamlist: COMMA FuncFParam FuncFParamlist
+FuncFParamlist: FuncFParamlist COMMA FuncFParam 
 {
     $$ = node("FuncFParamlist", 3, $1, $2, $3);
 }
 |
 {
     $$ = node("FuncFParamlist", 0);
+}
+| FuncFParam
+{
+    $$ = node("FuncFParamlist", 1, $1);
 }
 
 FuncFParam: INT Ident
@@ -200,30 +189,31 @@ FuncFParam: INT Ident
 {
     $$ = node("FuncFParam", 2, $1, $2);
 }
-| INT Ident LBRACKET RBRACKET Explist 
+| INT Ident   ArrayParamList 
 {
-    $$ = node("FuncFParam", 5, $1, $2, $3, $4, $5);
+    $$ = node("FuncFParam",  3, $1, $2, $3);
 }
-| FLOAT Ident LBRACKET RBRACKET Explist 
+| FLOAT Ident   ArrayParamList 
 {
-    $$ = node("FuncFParam", 5, $1, $2, $3, $4, $5);
+    $$ = node("FuncFParam",  3, $1, $2, $3);
 }
 
-Explist : LBRACKET Exp RBRACKET Explist
-{
-    $$ = node("Explist", 4, $1, $2, $3, $4);
-}
-|
-{
-    $$ = node("Explist", 0);
-}
+ArrayParamList:ArrayParamList LBRACKET Exp RBRACKET{
+    $$ = node("ArrayParamList", 3, $1, $2, $3);
+  }
+  | LBRACKET Exp RBRACKET{
+    $$ = node("ArrayParamList", 3, $1, $2, $3);
+  }
+  | LBRACKET RBRACKET{
+    $$ = node("ArrayParamList", 2, $1, $2);
+  }
 
 Block: LBRACE BlockItemList RBRACE
 {
     $$ = node("Block", 3, $1, $2, $3);
 }
 
-BlockItemList: BlockItem BlockItemList
+BlockItemList: BlockItemList  BlockItem 
 {
     $$ = node("BlockItemList", 2, $1, $2);
 }
@@ -232,9 +222,14 @@ BlockItemList: BlockItem BlockItemList
     $$ = node("BlockItemList", 0);
 }
 
-BlockItem: Decl
+BlockItem: ConstDecl
 {
     $$ = node("BlockItem", 1, $1);
+}
+| VarDecl
+{
+    $$ = node("BlockItem", 1, $1);
+
 }
 | Stmt
 {
@@ -296,7 +291,7 @@ Cond : LOrExp
     $$ = node("Cond", 1, $1);
 }
 
-LVal : Ident Explist
+LVal : Ident ArrayExpList
 {
     $$ = node("LVal", 2, $1, $2);
 }

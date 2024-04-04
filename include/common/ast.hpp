@@ -69,9 +69,8 @@ enum UnaryOp
 };
 class AST;
 struct ASTSTARTPOINT;
-struct ASTCompUnit;
-struct ASTDecl; 
-struct ASTBType;  
+struct ASTGlobalDef;
+struct ASTBType;
 struct ASTVarDef;
 struct ASTInitVal;
 struct ASTFuncDef;
@@ -126,20 +125,36 @@ struct ASTNode
 
 struct ASTSTARTPOINT : ASTNode
 {
+
     virtual Value *accept(ASTVisitor &) override;
     virtual ~ASTSTARTPOINT() = default;
-    std::shared_ptr<ASTCompUnit> comp_unit;
+    std::vector<std::shared_ptr<ASTGlobalDef>> global_defs;
 };
 
-struct ASTCompUnit : ASTNode
+struct ASTGlobalDef : virtual ASTNode
 {
-    virtual Value *accept(ASTVisitor &) override;
-    virtual ~ASTCompUnit() = default;
-    std::vector<std::shared_ptr<ASTCompUnit>> comp_units;
+    virtual ~ASTGlobalDef() = default;
 };
- 
- 
-struct ASTFuncDef : ASTCompUnit
+
+struct ASTStmt : virtual ASTNode
+{
+    std::string type;
+    virtual ~ASTStmt() = default;
+};
+
+struct ASTVarDef : ASTGlobalDef, ASTStmt
+{
+    bool is_constant;
+    bool is_init;
+    virtual Value *accept(ASTVisitor &) override final;
+    virtual ~ASTVarDef() = default;
+    SysYType type_;
+    std::string id;
+    std::vector<std::shared_ptr<ASTAddExp>> arr_len;
+    std::shared_ptr<ASTInitVal> init_val;
+};
+
+struct ASTFuncDef : ASTGlobalDef
 {
     SysYType type;
     std::string id;
@@ -147,19 +162,6 @@ struct ASTFuncDef : ASTCompUnit
     std::vector<std::shared_ptr<ASTFuncFParam>> params;
     std::shared_ptr<ASTBlock> block;
 };
-
-struct ASTVarDef : ASTCompUnit
-{
-    bool is_constant;
-    bool is_init;
-    virtual Value *accept(ASTVisitor &) override final;
-    virtual ~ASTVarDef() = default;
-    SysYType type;
-    std::string id;
-    std::vector<std::shared_ptr<ASTAddExp>> arr_len;
-    std::shared_ptr<ASTInitVal> init_val;
-};
- 
 
 struct ASTInitVal : ASTNode
 {
@@ -169,8 +171,6 @@ struct ASTInitVal : ASTNode
 
     std::vector<std::shared_ptr<ASTInitVal>> init_vals;
 };
-
-
 
 struct ASTFuncFParam : ASTNode
 {
@@ -182,18 +182,11 @@ struct ASTFuncFParam : ASTNode
     std::vector<std::shared_ptr<ASTExp>> Exps;
 };
 
-struct ASTBlock : ASTNode
+struct ASTBlock : ASTStmt
 {
     virtual Value *accept(ASTVisitor &) override final;
     virtual ~ASTBlock() = default;
-    // std::vector<std::shared_ptr<ASTBlockItem>> block_items;
-    std::vector<std::shared_ptr<ASTDecl>> Decls;
-};
-
-struct ASTStmt : ASTNode
-{
-    std::string type;
-    virtual ~ASTStmt() = default;
+    std::vector<std::shared_ptr<ASTStmt>> Stmts;
 };
 
 struct ASTAssignExpression : ASTStmt
@@ -348,7 +341,7 @@ class ASTVisitor
 {
 public:
     virtual Value *visit(ASTSTARTPOINT &) = 0;
-    virtual Value *visit(ASTCompUnit &) = 0;  
+    virtual Value *visit(ASTGlobalDef &) = 0;
     virtual Value *visit(ASTVarDef &) = 0;
     virtual Value *visit(ASTInitVal &) = 0;
     virtual Value *visit(ASTFuncDef &) = 0;
@@ -379,7 +372,7 @@ class ASTPrinter : public ASTVisitor
 {
 public:
     virtual Value *visit(ASTSTARTPOINT &) override final;
-    virtual Value *visit(ASTCompUnit &) override final;  
+    virtual Value *visit(ASTGlobalDef &) override final;
     virtual Value *visit(ASTVarDef &) override final;
     virtual Value *visit(ASTInitVal &) override final;
     virtual Value *visit(ASTFuncDef &) override final;
