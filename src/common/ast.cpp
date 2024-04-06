@@ -645,13 +645,7 @@ Value *ASTEmptyStmt::accept(ASTVisitor &visitor) { return visitor.visit(*this); 
         std::cout << std::string(N, '-'); \
     }
 
-// struct ASTSTARTPOINT : ASTNode
-// {
-
-//     virtual Value *accept(ASTVisitor &) override;
-//     virtual ~ASTSTARTPOINT() = default;
-//     std::vector<std::shared_ptr<ASTGlobalDef>> global_defs;
-// };
+ 
 Value *ASTPrinter::visit(ASTSTARTPOINT &node)
 {
     _DEBUG_PRINT_N_(depth);
@@ -664,6 +658,20 @@ Value *ASTPrinter::visit(ASTSTARTPOINT &node)
     remove_depth();
 }
 
+Value *ASTPrinter::visit(ASTFuncDef &node)
+{
+    _DEBUG_PRINT_N_(depth);
+    std::cout << "func def" << std::endl;
+    add_depth();
+    std::cout << node.id << std::endl;
+    for (auto func_fparam : node.params)
+    {
+        func_fparam->accept(*this);
+    }
+    node.block->accept(*this);
+    remove_depth();
+    return nullptr;
+}
 
 Value *ASTPrinter::visit(ASTVarDef &node)
 {
@@ -708,20 +716,7 @@ Value *ASTPrinter::visit(ASTInitVal &node)
     return nullptr;
 }
 
-Value *ASTPrinter::visit(ASTFuncDef &node)
-{
-    _DEBUG_PRINT_N_(depth);
-    std::cout << "func def" << std::endl;
-    add_depth();
-    std::cout << node.id << std::endl;
-    for (auto func_fparam : node.params)
-    {
-        func_fparam->accept(*this);
-    }
-    node.block->accept(*this);
-    remove_depth();
-    return nullptr;
-}
+
 
 Value *ASTPrinter::visit(ASTFuncFParam &node)
 {

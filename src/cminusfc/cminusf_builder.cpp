@@ -66,14 +66,18 @@ bool promote(IRBuilder *builder, Value **l_val_p, Value **r_val_p)
  * scope.push: add a new binding to current scope
  * scope.find: find and return the value bound to the name
  */
+/*
+struct ASTSTARTPOINT : ASTNode
+{
 
+    virtual Value *accept(ASTVisitor &) override;
+    virtual ~ASTSTARTPOINT() = default;
+    std::vector<std::shared_ptr<ASTGlobalDef>> global_defs;
+};
+*/
 Value *CminusfBuilder::visit(ASTSTARTPOINT &node)
 {
-    return node.comp_unit->accept(*this);
-}
-
-Value *CminusfBuilder::visit(ASTCompUnit &node)
-{
+    Value *ret_val = nullptr;
     VOID_T = module->get_void_type();
     INT1_T = module->get_int1_type();
     INT8_T = module->get_int8_type();
@@ -81,127 +85,26 @@ Value *CminusfBuilder::visit(ASTCompUnit &node)
     INT32PTR_T = module->get_int32_ptr_type();
     FLOAT_T = module->get_float_type();
     FLOATPTR_T = module->get_float_ptr_type();
-
-    Value *ret_val = nullptr;
-    for (auto &decl : node.comp_units)
+    for (auto &global_def : node.global_defs)
     {
-        ret_val = decl->accept(*this);
+        ret_val = global_def->accept(*this);
     }
     return ret_val;
 }
 
-Value *CminusfBuilder::visit(ASTConstDecl &node)
+Value *CminusfBuilder::visit(ASTInitVal &node)
 {
-    Value *ret_val = nullptr;
-    for (auto &const_defs : node.const_defs)
+    if (node.expression == nullptr)
     {
-        ret_val = const_defs->accept(*this);
+
+        Value *ret_val = nullptr;
+        for (auto &init_val : node.init_vals)
+        {
+            ret_val = init_val->accept(*this);
+        }
+        return ret_val;
     }
-    return ret_val;
-}
-
-Value *CminusfBuilder::visit(ASTConstDef &node)
-{
-    Type *var_type = nullptr;
-
-    var_type = module->get_int32_type();
-
-    if (node.ConstExps.size() == 0)
-    {
-        if (scope.in_global())
-        {
-            auto *expr_result = node.RConstExps[0]->accept(*this);
-            auto *var = GlobalVariable::create(node.id, module.get(),
-                                               expr_result->get_type(), true,
-                                               dynamic_cast<Constant *>(expr_result));
-            scope.push(node.id, var);
-        }
-        else
-        {
-            auto *expr_result = node.RConstExps[0]->accept(*this);
-            auto *var = builder->create_alloca(expr_result->get_type());
-            builder->create_store(expr_result, var);
-            scope.push(node.id, var);
-        }
-    }
-    else
-    {
-        // 计算数组大小
-        std::vector<int> array_size;
-        for (auto &expr : node.ConstExps)
-        {
-            auto *expr_result = expr->accept(*this);
-            array_size.push_back(dynamic_cast<ConstantInt *>(expr_result)->get_value());
-        }
-        std::vector<std::pair<std::vector<int>, int>> result;
-
-        int dim = array_size.size();
-
-        std::vector<int> pre = array_size;
-        for (int i = 1; i < dim; i++)
-        {
-            pre[dim - 1 - i] *= pre[dim - i];
-        }
-        pre.push_back(1);
-
-        std::vector<int> arr(pre[0], 0);
-        std::vector<int> ind_stk;
-        std::vector<int> dim_stk;
-        ind_stk.push_back(0);
-        dim_stk.push_back(-1);
-        int ind = 0;
-        int temp = 0;
-        for (std::string ch : node.info)
-        {
-            if (ch == "LBRACE")
-            {
-                for (int d = dim_stk.back() + 1; d < dim; d++)
-                {
-                    if (ind % pre[d] == 0)
-                    {
-                        ind_stk.push_back(ind + pre[d]);
-                        dim_stk.push_back(d);
-                        break;
-                    }
-                }
-            }
-            else if (ch == "RBRACE")
-            {
-                ind = ind_stk.back();
-                ind_stk.pop_back();
-                dim_stk.pop_back();
-            }
-            else
-            {
-                arr[ind] = dynamic_cast<ConstantInt *>(node.RConstExps[temp]->accept(*this))->get_value();
-                ind++;
-                temp++;
-            }
-        }
-
-        std::vector<Constant *> const_array;
-        for (int i = 0; i < arr.size(); i++)
-        {
-            const_array.push_back(CONST_INT(arr[i]));
-        }
-        auto m = ArrayType::get(var_type, const_array.size());
-
-        ConstantArray *const_array_val = ConstantArray::get(m, const_array);
-
-        if (scope.in_global())
-        {
-            auto array_type = ArrayType::get(var_type, const_array.size());
-            auto *var = GlobalVariable::create(node.id, module.get(), array_type, true, const_array_val);
-            scope.push(node.id, var);
-        }
-        else
-        {
-            auto array_type = ArrayType::get(var_type, const_array.size());
-            auto *var = builder->create_alloca(array_type);
-            builder->create_store(const_array_val, var);
-            scope.push(node.id, var);
-        }
-    }
+    return node.expression->accept(*this);
 }
 
 Value *CminusfBuilder::visit(ASTFuncDef &node)
@@ -310,17 +213,6 @@ Value *CminusfBuilder::visit(ASTFuncDef &node)
         }
     }
     scope.exit();
-    return nullptr;
-}
-
-Value *CminusfBuilder::visit(ASTVarDecl &node)
-{
-    Value *ret_val = nullptr;
-    for (auto &decl : node.var_defs)
-    {
-        decl->type = node.type;
-        ret_val = decl->accept(*this);
-    }
     return nullptr;
 }
 
@@ -556,355 +448,11 @@ Value *CminusfBuilder::visit(ASTBreakStmt &node)
 {
     return builder->create_br(nextBB_while);
 }
-/*
-void assignInitVal(AllocaInst *alloca, Type *lValType, bool isConstant, InitItem initVal, IRStmtBuilder *builder, Module *module, bool firsttime)
-{
-    if (firsttime)
-    {
-        depth = 0;
-        indexMax.clear();
-        indexList.clear();
-        realType = lValType;
-        while (realType->is_array_type())
-        {
-            indexMax.push_back(((ArrayType *)realType)->get_num_of_elements());
-            indexList.push_back(0);
-            realType = realType->get_array_element_type();
-        }
-        if (alloca != NULL && lValType->is_array_type()) // 局部变量置0
-        {
-            tmpfor0.clear();
-            tmpfor0.push_back(ConstantInt::get(0, module));
-            SetZero(alloca, 0, builder, module);
-        }
-        if (isConstant) // 要处理常数
-        {
-            int totalnum = 1;
-            for (int i = 0; i < indexMax.size(); i++)
-            {
-                totalnum *= indexMax[i];
-            }
-            tmpforconst = (Constant **)realloc(tmpforconst, sizeof(Constant *) * totalnum); // 分配参数暂存空间
-            for (int i = 0; i < totalnum; i++)
-            {
-                tmpforconst[i] = ConstantZero::get(realType, module);
-            }
-        }
-    }
-    // 如果是常数，要返回constant*给外面的函数用
-    if (!initVal.isValue) // 是数组，递归操作
-    {
-        depth++;
-        for (unsigned int i = 0; i < initVal.list.size(); i++)
-        {
-            int beforepos = indexList[depth - 1];
-            assignInitVal(alloca, lValType->get_array_element_type(), isConstant, initVal.list[i], builder, module, false);
 
-            bool upmatch = false;
-            if (beforepos == indexList[depth - 1])
-                upmatch = true;
-            else
-                for (auto j = depth; j < indexList.size(); j++)
-                {
-                    if (indexList[j] != 0)
-                    {
-                        upmatch = true;
-                        break;
-                    }
-                }
-            if (initVal.list[i].isValue)
-                upmatch = false;
-            if (upmatch)
-            {
-                for (auto j = depth; j < indexList.size(); j++)
-                {
-                    indexList[j] = 0;
-                }
-                for (auto j = depth - 1;; j--)
-                {
-                    indexList[j]++;
-                    if (j > 0 && indexList[j] == indexMax[j])
-                        indexList[j] = 0;
-                    else
-                        break;
-                }
-            }
-        }
-        depth--;
-    }
-    else // 不是数组，直接赋值
-    {
-        if (depth < indexMax.size()) // 给的初始值深度不够，自动加深
-        {
-            depth++;
-            assignInitVal(alloca, lValType->get_array_element_type(), isConstant, initVal, builder, module, false);
-            depth--;
-            return;
-        }
-
-        if (alloca != NULL) // 非空说明是局部变量，要
-        {
-            if (alloca->get_type()->get_pointer_element_type()->is_array_type()) // 是数组，要先取指针
-            {
-                std::vector<Value *> indexListforGep;
-                indexListforGep.push_back(ConstantInt::get(0, module));
-                for (std::size_t i = 0; i < indexList.size(); i++)
-                {
-                    indexListforGep.push_back(ConstantInt::get(indexList[i], module));
-                }
-                auto aGep = builder->create_gep(alloca, indexListforGep);
-                Assign(aGep, initVal.expr, builder);
-            }
-            else
-                Assign(alloca, initVal.expr, builder);
-        }
-        Constant *tmp;
-        if (isConstant)
-        {
-
-            // float=int
-            if (dynamic_cast<ConstantInt *>(initVal.expr) && lValType == FLOAT_T)
-            {
-                int val = ((ConstantInt *)initVal.expr)->get_value();
-                tmp = ConstantFloat::get((float)val, module);
-            }
-            // int=float
-            else if (dynamic_cast<ConstantFloat *>(initVal.expr) && lValType == INT32_T)
-            {
-                float val = ((ConstantFloat *)initVal.expr)->get_value();
-                tmp = ConstantInt::get((int)val, module);
-            }
-            else
-            {
-                tmp = (Constant *)initVal.expr;
-            }
-            int pos = 0;
-            for (int i = 0; i < indexMax.size(); i++)
-            {
-                pos *= indexMax[i];
-                pos += indexList[i];
-            }
-            tmpforconst[pos] = tmp;
-        }
-        // 处理成功，下标++
-        if (depth > 0)
-        {
-            for (auto j = depth; j < indexList.size(); j++)
-            {
-                indexList[j] = 0;
-            }
-            for (auto j = depth - 1;; j--)
-            {
-                indexList[j]++;
-                if (j > 0 && indexList[j] == indexMax[j])
-                    indexList[j] = 0;
-                else
-                    break;
-            }
-        }
-        // 处理成功，下标++ end
-    }
-}
-*/
 Value *CminusfBuilder::visit(ASTVarDef &node)
 {
-    Type *var_type = module->get_int32_type();
-
-    if (node.RConstExps.size() == 0)
-    {
-        Type *var_type = nullptr;
-        if (node.type == TYPE_INT)
-        {
-            var_type = module->get_int32_type();
-        }
-        else
-        {
-            var_type = module->get_float_type();
-        }
-
-        if (node.ConstExps.size() == 0)
-        {
-            if (scope.in_global())
-            {
-                auto *initializer = ConstantZero::get(var_type, module.get());
-                auto *var = GlobalVariable::create(node.id, module.get(), var_type,
-                                                   false, initializer);
-                scope.push(node.id, var);
-            }
-            else
-            {
-                auto *var = builder->create_alloca(var_type);
-                scope.push(node.id, var);
-            }
-        }
-        else
-        {
-            std::vector<int> array_size;
-            for (auto &expr : node.ConstExps)
-            {
-                auto *expr_result = expr->accept(*this);
-                array_size.push_back(dynamic_cast<ConstantInt *>(expr_result)->get_value());
-            }
-            // 把维数相乘得到数组大小
-            int size = 1;
-            for (int i = 0; i < array_size.size(); i++)
-            {
-                size *= array_size[i];
-            }
-            auto array_type = ArrayType::get(var_type, size);
-            if (scope.in_global())
-            {
-                auto *initializer = ConstantZero::get(array_type, module.get());
-                auto *var = GlobalVariable::create(node.id, module.get(),
-                                                   array_type, false, initializer);
-                scope.push(node.id, var);
-            }
-            else
-            {
-                auto *var = builder->create_alloca(array_type);
-                scope.push(node.id, var);
-            }
-        }
-    }
-    else
-    {
-        if (node.ConstExps.size() == 0)
-        {
-            if (scope.in_global())
-            {
-                auto *expr_result = node.RConstExps[0]->accept(*this);
-                auto *var = GlobalVariable::create(node.id, module.get(),
-                                                   expr_result->get_type(), false,
-                                                   dynamic_cast<Constant *>(expr_result));
-                scope.push(node.id, var);
-            }
-            else
-            {
-                auto *expr_result = node.RConstExps[0]->accept(*this);
-                auto *var = builder->create_alloca(expr_result->get_type());
-                builder->create_store(expr_result, var);
-                scope.push(node.id, var);
-            }
-        }
-        else
-        {
-            std::vector<int> array_size;
-
-            
-            for (auto &expr : node.ConstExps)
-            {
-                auto *expr_result = expr->accept(*this);
-                // error
-                array_size.push_back(dynamic_cast<ConstantInt *>(expr_result)->get_value());
-            }
-            std::vector<std::pair<std::vector<int>, int>> result;
-
-            int dim = array_size.size();
-
-            std::vector<int> pre = array_size;
-            for (int i = 1; i < dim; i++)
-            {
-                pre[dim - 1 - i] *= pre[dim - i];
-            }
-            pre.push_back(1);
-
-            std::vector<int> arr(pre[0], 0);
-            std::vector<int> ind_stk;
-            std::vector<int> dim_stk;
-            ind_stk.push_back(0);
-            dim_stk.push_back(-1);
-            int ind = 0;
-            int temp = 0;
-            std::map<int, Value *> arr_map;
-            for (std::string ch : node.info)
-            {
-                if (ch == "LBRACE")
-                {
-                    for (int d = dim_stk.back() + 1; d < dim; d++)
-                    {
-                        if (ind % pre[d] == 0)
-                        {
-                            ind_stk.push_back(ind + pre[d]);
-                            dim_stk.push_back(d);
-                            break;
-                        }
-                    }
-                }
-                else if (ch == "RBRACE")
-                {
-                    ind = ind_stk.back();
-                    ind_stk.pop_back();
-                    dim_stk.pop_back();
-                }
-                else
-                {
-                    auto m = node.RConstExps[temp]->accept(*this);
-                    if (dynamic_cast<ConstantInt *>(m) != nullptr)
-                    {
-                        arr[ind] = dynamic_cast<ConstantInt *>(m)->get_value();
-                        // 把ind和arr[ind]的值存入map
-                        arr_map.insert(std::pair<int, Value *>(ind, m));
-                    }
-                    else
-                    {
-                        arr[ind] = 0;
-                        arr_map.insert(std::pair<int, Value *>(ind, m));
-                    }
-                    ind++;
-                    temp++;
-                }
-            }
-
-            std::vector<Constant *> const_array;
-            for (int i = 0; i < arr.size(); i++)
-            {
-                const_array.push_back(CONST_INT(arr[i]));
-            }
-            auto m = ArrayType::get(var_type, const_array.size());
-
-            ConstantArray *const_array_val = ConstantArray::get(m, const_array);
-
-            if (scope.in_global())
-            {
-                auto array_type = ArrayType::get(var_type, const_array.size());
-                auto *var = GlobalVariable::create(node.id, module.get(), array_type, false, const_array_val);
-                scope.push(node.id, var);
-            }
-            else
-            {
-                // auto array_type = ArrayType::get(var_type, const_array.size());
-                // auto *var = builder->create_alloca(array_type);
-                auto array_type = ArrayType::get(var_type, const_array.size());
-                auto *var = builder->create_alloca(array_type);
-                scope.push(node.id, var);
-                // 把arr_map中的值存入数组
-                for (auto iter = arr_map.begin(); iter != arr_map.end(); iter++)
-                {
-                    auto *val = iter->second;
-                    int ind = iter->first;
-                    auto *tmp_ptr = builder->create_gep(var, {CONST_INT(0), CONST_INT(ind)});
-                    builder->create_store(val, tmp_ptr);
-                }
-            }
-        }
-    }
+    return nullptr;
 }
-
-Value *CminusfBuilder::visit(ASTInitVal &node)
-{
-    if (node.expression == nullptr)
-    {
-
-        Value *ret_val = nullptr;
-        for (auto &init_val : node.init_vals)
-        {
-            ret_val = init_val->accept(*this);
-        }
-        return ret_val;
-    }
-    return node.expression->accept(*this);
-}
-
 Value *CminusfBuilder::visit(ASTFuncFParam &node)
 {
     return nullptr;
@@ -921,7 +469,7 @@ Value *CminusfBuilder::visit(ASTBlock &node)
         scope.enter();
     }
 
-    for (auto &stmt : node.Decls)
+    for (auto &stmt : node.Stmts)
     {
 
         stmt->accept(*this);

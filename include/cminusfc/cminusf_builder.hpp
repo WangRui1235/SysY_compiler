@@ -153,11 +153,7 @@ public:
     }
 
 private:
-    virtual Value *visit(ASTSTARTPOINT &) override final;
-    virtual Value *visit(ASTCompUnit &) override final;
-    virtual Value *visit(ASTConstDecl &) override final;
-    virtual Value *visit(ASTConstDef &) override final;
-    virtual Value *visit(ASTVarDecl &) override final;
+    virtual Value *visit(ASTSTARTPOINT &) override final;   
     virtual Value *visit(ASTVarDef &) override final;
     virtual Value *visit(ASTFuncDef &) override final;
     virtual Value *visit(ASTInitVal &) override final;

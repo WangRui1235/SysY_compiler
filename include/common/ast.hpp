@@ -134,6 +134,7 @@ struct ASTSTARTPOINT : ASTNode
 struct ASTGlobalDef : virtual ASTNode
 {
     virtual ~ASTGlobalDef() = default;
+    virtual Value *accept(ASTVisitor &) override = 0;
 };
 
 struct ASTStmt : virtual ASTNode
@@ -163,12 +164,11 @@ struct ASTFuncDef : ASTGlobalDef
     std::shared_ptr<ASTBlock> block;
 };
 
-struct ASTInitVal : ASTNode
+struct  ASTInitVal : ASTNode
 {
     virtual Value *accept(ASTVisitor &) override final;
     virtual ~ASTInitVal() = default;
     std::shared_ptr<ASTExp> expression;
-
     std::vector<std::shared_ptr<ASTInitVal>> init_vals;
 };
 
@@ -341,7 +341,6 @@ class ASTVisitor
 {
 public:
     virtual Value *visit(ASTSTARTPOINT &) = 0;
-    virtual Value *visit(ASTGlobalDef &) = 0;
     virtual Value *visit(ASTVarDef &) = 0;
     virtual Value *visit(ASTInitVal &) = 0;
     virtual Value *visit(ASTFuncDef &) = 0;
@@ -372,7 +371,6 @@ class ASTPrinter : public ASTVisitor
 {
 public:
     virtual Value *visit(ASTSTARTPOINT &) override final;
-    virtual Value *visit(ASTGlobalDef &) override final;
     virtual Value *visit(ASTVarDef &) override final;
     virtual Value *visit(ASTInitVal &) override final;
     virtual Value *visit(ASTFuncDef &) override final;
@@ -385,9 +383,7 @@ public:
     virtual Value *visit(ASTReturnStmt &) override final;
     virtual Value *visit(ASTEmptyStmt &) override final;
     virtual Value *visit(ASTAssignExpression &) override final;
-
     virtual Value *visit(ASTLVal &) override final;
-
     virtual Value *visit(ASTNumber &) override final;
     virtual Value *visit(ASTUnaryExp &) override final;
     virtual Value *visit(ASTMulExp &) override final;
@@ -396,7 +392,6 @@ public:
     virtual Value *visit(ASTEqExp &) override final;
     virtual Value *visit(ASTLAndExp &) override final;
     virtual Value *visit(ASTLOrExp &) override final;
-
     void add_depth() { depth += 2; }
     void remove_depth() { depth -= 2; }
 
