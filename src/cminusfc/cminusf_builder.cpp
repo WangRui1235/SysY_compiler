@@ -449,8 +449,28 @@ Value *CminusfBuilder::visit(ASTBreakStmt &node)
     return builder->create_br(nextBB_while);
 }
 
+
 Value *CminusfBuilder::visit(ASTVarDef &node)
 {
+//    struct ASTVarDef : ASTGlobalDef, ASTStmt
+// {
+//     bool is_constant;
+//     bool is_init;
+//     virtual Value *accept(ASTVisitor &) override final;
+//     virtual ~ASTVarDef() = default;
+//     SysYType type_;
+//     std::string id;
+//     std::vector<std::shared_ptr<ASTAddExp>> arr_len;
+//     std::shared_ptr<ASTInitVal> init_val;
+// };
+    auto name = node.id;
+    auto element_type = node.type_ == TYPE_INT ? INT32_T : FLOAT_T;
+    auto *lvaltype = element_type;
+    for(int i = node.arr_len.size() - 1; i >= 0; i--)
+    {
+        auto *len = node.arr_len[i]->accept(*this);
+        lvaltype = ArrayType::get(lvaltype, ((ConstantInt *)len)->get_value());
+    }
     return nullptr;
 }
 Value *CminusfBuilder::visit(ASTFuncFParam &node)
