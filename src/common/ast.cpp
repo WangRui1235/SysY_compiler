@@ -61,6 +61,12 @@ ASTNode *AST::transform_node_iter(syntax_tree_node *n)
     // GlobalDecl: ConstDecl| VarDecl| FuncDef
     else if (_STR_EQ(n->name, "GlobalDecl"))
     {
+        if(n->children[0]->name=="FuncDef"){
+            auto child_node = dynamic_cast<ASTFuncDef *>(transform_node_iter(n->children[0]));
+            auto node = new ASTSTARTPOINT();
+            node->global_defs.push_back(std::shared_ptr<ASTGlobalDef>(child_node));
+            return node;
+        }
         return transform_node_iter(n->children[0]);
     }
     /*

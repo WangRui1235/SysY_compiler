@@ -65,15 +65,15 @@ CompUnit: CompUnit GlobalDecl
 
 GlobalDecl: ConstDecl 
 {
-    $$ = node("Decl", 1, $1);
+    $$ = node("GlobalDecl", 1, $1);
 }
 | VarDecl
 {
-    $$ = node("Decl",  1, $1);
+    $$ = node("GlobalDecl",  1, $1);
 }
 | FuncDef
 {
-    $$ = node("Decl", 1, $1);
+    $$ = node("GlobalDecl", 1, $1);
 }
 
 ConstDecl: CONST INT VarDefList SEMICOLON

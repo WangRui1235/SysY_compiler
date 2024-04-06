@@ -11,10 +11,8 @@
             "program":   "${workspaceFolder}/build/cminusfc",
             "args": [
                 "-emit-llvm",
-                "${workspaceFolder}/tests/func/functional/04_arr_defn3.sy"
-                
-                
- 
+                "${workspaceFolder}/tests/func/functional/00_main.sy"
+         
             ],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
