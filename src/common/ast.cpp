@@ -645,26 +645,25 @@ Value *ASTEmptyStmt::accept(ASTVisitor &visitor) { return visitor.visit(*this); 
         std::cout << std::string(N, '-'); \
     }
 
+// struct ASTSTARTPOINT : ASTNode
+// {
+
+//     virtual Value *accept(ASTVisitor &) override;
+//     virtual ~ASTSTARTPOINT() = default;
+//     std::vector<std::shared_ptr<ASTGlobalDef>> global_defs;
+// };
 Value *ASTPrinter::visit(ASTSTARTPOINT &node)
 {
     _DEBUG_PRINT_N_(depth);
     std::cout << "startpoint" << std::endl;
     add_depth();
-    node.comp_unit->accept(*this);
-    remove_depth();
-}
-Value *ASTPrinter::visit(ASTCompUnit &node)
-{
-    _DEBUG_PRINT_N_(depth);
-    std::cout << "program" << std::endl;
-    add_depth();
-    for (auto decl : node.comp_units)
+    for (auto global_def : node.global_defs)
     {
-        decl->accept(*this);
+        global_def->accept(*this);
     }
     remove_depth();
-    return nullptr;
 }
+
 
 Value *ASTPrinter::visit(ASTVarDef &node)
 {
