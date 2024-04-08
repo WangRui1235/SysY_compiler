@@ -1,6 +1,0 @@
---- /home/waang/cowork/tests/func/testcases/lv0_1/functional/final_test2/50_short_circuit.txt	2024-02-21 19:01:38.675688079 +0800
-+++ /home/waang/cowork/tests/func/testcases/lv0_1/functional/50_short_circuit.out	2024-02-21 18:42:36.680406690 +0800
-@@ -1 +1,2 @@
--111112100
-+11111210
-+0

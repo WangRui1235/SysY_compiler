@@ -1,6 +1,0 @@
---- /home/waang/cowork/tests/func/testcases/lv0_1/functional/final_test2/25_while_if.txt	2024-02-21 19:01:35.587762946 +0800
-+++ /home/waang/cowork/tests/func/testcases/lv0_1/functional/25_while_if.out	2024-02-21 18:42:36.680406690 +0800
-@@ -1 +1,2 @@
--880
-+88
-+0

@@ -3,6 +3,7 @@
 #include <cstring>
 #include <iostream>
 #include <queue>
+#include <stack>
 #include <map>
 #define _AST_NODE_ERROR_                                   \
     std::cerr << "Abort due to node cast error."           \
@@ -61,7 +62,8 @@ ASTNode *AST::transform_node_iter(syntax_tree_node *n)
     // GlobalDecl: ConstDecl| VarDecl| FuncDef
     else if (_STR_EQ(n->name, "GlobalDecl"))
     {
-        if(n->children[0]->name=="FuncDef"){
+        if (_STR_EQ(n->children[0]->name, "FuncDef"))
+        {
             auto child_node = dynamic_cast<ASTFuncDef *>(transform_node_iter(n->children[0]));
             auto node = new ASTSTARTPOINT();
             node->global_defs.push_back(std::shared_ptr<ASTGlobalDef>(child_node));
@@ -164,7 +166,51 @@ ASTNode *AST::transform_node_iter(syntax_tree_node *n)
         std::reverse(node->arr_len.begin(), node->arr_len.end());
         return node;
     }
+    /*
+    FuncDef:   INT Ident LPAREN FuncFParams RPAREN Block
+    {
+        $$ = node("FuncDef", 6, $1, $2, $3, $4, $5, $6);
+    }
+    |  FLOAT Ident LPAREN FuncFParams RPAREN Block
+    {
+        $$ = node("FuncDef", 6, $1, $2, $3, $4, $5, $6);
+    }
+    | VOID Ident LPAREN FuncFParams RPAREN Block
+    {
+        $$ = node("FuncDef", 6, $1, $2, $3, $4, $5, $6);
+    }
+    */
+    /*
+    FuncFParams: FuncFParams COMMA FuncFParam
+    {
+     $$ = node("FuncFParams", 3, $1, $2, $3);
+    }
+    | FuncFParam
+    {
+     $$ = node("FuncFParams", 1, $1);
+    }
+    |
+    {
+     $$ = node("FuncFParams", 0);
+    }
 
+    FuncFParam: INT Ident
+    {
+     $$ = node("FuncFParam", 2, $1, $2);
+    }
+    | FLOAT Ident
+    {
+     $$ = node("FuncFParam", 2, $1, $2);
+    }
+    | INT Ident   ArrayParamList
+    {
+     $$ = node("FuncFParam",  3, $1, $2, $3);
+    }
+    | FLOAT Ident   ArrayParamList
+    {
+     $$ = node("FuncFParam",  3, $1, $2, $3);
+    }
+    */
     else if (_STR_EQ(n->name, "FuncDef"))
     {
         auto node = new ASTFuncDef();
@@ -182,41 +228,35 @@ ASTNode *AST::transform_node_iter(syntax_tree_node *n)
         }
 
         node->id = n->children[1]->name;
-        if (n->children_num == 5)
+        if (_STR_EQ(n->children[3]->children[0]->name, "epsilon"))
         {
-            // 没有params
             auto stmt_node =
-                dynamic_cast<ASTBlock *>(transform_node_iter(n->children[4]));
+                dynamic_cast<ASTBlock *>(transform_node_iter(n->children[5]));
             node->block = std::shared_ptr<ASTBlock>(stmt_node);
+
             return node;
         }
-        // flatten params
-        // n->children[3]是FuncFParams
-        // FuncFParams: FuncFParam FuncFParamlist
-        // FuncFParamlist: COMMA FuncFParam FuncFParamlist | ε
-        std::queue<syntax_tree_node *> s;
-        auto list_ptr = n->children[3];
-        // list_ptr是FuncFParams
-        s.push(list_ptr->children[0]);
-        list_ptr = list_ptr->children[1];
-        while (list_ptr->children_num == 3)
+        auto node_child = n->children[3];
+        // FuncFParams : FuncFParams COMMA FuncFParam | FuncFParam
+        // 构建stack
+        std::stack<syntax_tree_node *> q; 
+        while (node_child->children_num == 3)
         {
-            s.push(list_ptr->children[1]);
-            list_ptr = list_ptr->children[2];
+            q.push(node_child->children[2]);
+            node_child = node_child->children[0];
         }
-        while (!s.empty())
+        q.push(node_child->children[0]);
+        while (!q.empty())
         {
-            auto child_node =
-                static_cast<ASTFuncFParam *>(transform_node_iter(s.front()));
-
+            auto child_node = static_cast<ASTFuncFParam *>(transform_node_iter(q.top()));
             auto child_node_shared = std::shared_ptr<ASTFuncFParam>(child_node);
             node->params.push_back(child_node_shared);
-            s.pop();
+            q.pop();
         }
-
         auto stmt_node =
             dynamic_cast<ASTBlock *>(transform_node_iter(n->children[5]));
         node->block = std::shared_ptr<ASTBlock>(stmt_node);
+
         return node;
     }
     else if (_STR_EQ(n->name, "FuncFParam"))
@@ -624,7 +664,7 @@ ASTNode *AST::transform_node_iter(syntax_tree_node *n)
         return transform_node_iter(n->children[0]);
     }
 }
-Value *ASTSTARTPOINT::accept(ASTVisitor &visitor) { return visitor.visit(*this); } 
+Value *ASTSTARTPOINT::accept(ASTVisitor &visitor) { return visitor.visit(*this); }
 Value *ASTFuncDef ::accept(ASTVisitor &visitor) { return visitor.visit(*this); }
 Value *ASTVarDef::accept(ASTVisitor &visitor) { return visitor.visit(*this); }
 Value *ASTInitVal::accept(ASTVisitor &visitor) { return visitor.visit(*this); }
@@ -651,7 +691,6 @@ Value *ASTEmptyStmt::accept(ASTVisitor &visitor) { return visitor.visit(*this); 
         std::cout << std::string(N, '-'); \
     }
 
- 
 Value *ASTPrinter::visit(ASTSTARTPOINT &node)
 {
     _DEBUG_PRINT_N_(depth);
@@ -721,8 +760,6 @@ Value *ASTPrinter::visit(ASTInitVal &node)
     remove_depth();
     return nullptr;
 }
-
-
 
 Value *ASTPrinter::visit(ASTFuncFParam &node)
 {

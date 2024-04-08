@@ -449,27 +449,293 @@ Value *CminusfBuilder::visit(ASTBreakStmt &node)
     return builder->create_br(nextBB_while);
 }
 
+/* 常量符号表 */
+std::list<std::map<std::string, Constant *>> const_table;
+/* 多维数组处理 */ ///////////
+std::size_t depth = 0;
+std::vector<int> indexMax;
+std::vector<int> indexList;
+// 将变常量插入符号表
+bool Insert(std::string name, Constant *val)
+{
+    // 插入到当前作用域的符号表
+    auto result = const_table.front().insert(std::pair<std::string, Constant *>(name, val));
+    return result.second;
+}
+// 初始化向量
+typedef struct InitItem
+{
+    bool isValue;
+    Value *expr;
+    std::vector<InitItem> list;
+} Inititem;
+InitItem recentInitItem;
+std::vector<Value *> tmpfor0;
+Constant **tmpforconst;
+Type *realType;
+void Assign(Value *target, Value *val ,IRBuilder *builder)
+{
+    Type *target_type;
+
+    if (dynamic_cast<GlobalVariable *>(target))
+    {
+        target_type = ((GlobalVariable *)target)->get_type(); // 指针
+        target_type = ((PointerType *)target_type)->get_element_type();
+    }
+    else
+    {
+        target_type = ((AllocaInst *)target)->get_alloca_type();
+    }
+
+    // int=float
+    if (val->get_type() == FLOAT_T && (target_type == INT32_T))
+    {
+        auto tmp = builder->create_fptosi(val, INT32_T);
+        builder->create_store(tmp, target);
+    }
+    // float=int
+    else if (val->get_type() == INT32_T && target_type == FLOAT_T)
+    {
+        auto tmp = builder->create_sitofp(val, FLOAT_T);
+        builder->create_store(tmp, target);
+    }
+    else
+    {
+        builder->create_store(val, target);
+    }
+}
+void SetZero(AllocaInst *alloca, std::size_t nowdepth,  IRBuilder* builder, Module *module)
+{
+    if (nowdepth == indexMax.size())
+    {
+        auto aGep = builder->create_gep(alloca, tmpfor0);
+        Assign(aGep, ConstantInt::get(0, module), &*builder);
+    }
+    else
+    {
+        for (int i = 0; i < indexMax[nowdepth]; i++)
+        {
+            tmpfor0.push_back(ConstantInt::get(i, module));
+            SetZero(alloca, nowdepth + 1, &*builder, module);
+            tmpfor0.pop_back();
+        }
+    }
+}
+
+Constant *parseConst(int nowdepth, int offset, Type *type)
+{
+    if (nowdepth == indexMax.size())
+        return tmpforconst[offset];
+    std::vector<Constant *> tmp;
+    int blocksize = 1;
+    for (int i = indexMax.size() - 1; i > nowdepth; i--)
+    {
+        blocksize *= indexMax[i];
+    }
+    for (int i = 0; i < indexMax[nowdepth]; i++)
+    {
+        tmp.push_back(parseConst(nowdepth + 1, offset + i * blocksize, type->get_array_element_type()));
+    }
+    return ConstantArray::get((ArrayType *)type, tmp);
+}
+
+void assignInitVal(AllocaInst *alloca, Type *lValType, bool isConstant, InitItem initVal,IRBuilder *builder , Module *module, bool firsttime)
+{
+    if (firsttime)
+    {
+        depth = 0;
+        indexMax.clear();
+        indexList.clear();
+        realType = lValType;
+        while (realType->is_array_type())
+        {
+            indexMax.push_back(((ArrayType *)realType)->get_num_of_elements());
+            indexList.push_back(0);
+            realType = realType->get_array_element_type();
+        }
+        if (alloca != NULL && lValType->is_array_type()) // 局部变量置0
+        {
+            tmpfor0.clear();
+            tmpfor0.push_back(ConstantInt::get(0, module));
+            SetZero(alloca, 0, &*builder, module);
+        }
+        if (isConstant) // 要处理常数
+        {
+            int totalnum = 1;
+            for (int i = 0; i < indexMax.size(); i++)
+            {
+                totalnum *= indexMax[i];
+            }
+            tmpforconst = (Constant **)realloc(tmpforconst, sizeof(Constant *) * totalnum); // 分配参数暂存空间
+            for (int i = 0; i < totalnum; i++)
+            {
+                tmpforconst[i] = ConstantZero::get(realType, module);
+            }
+        }
+    }
+    // 如果是常数，要返回constant*给外面的函数用
+    if (!initVal.isValue) // 是数组，递归操作
+    {
+        depth++;
+        for (unsigned int i = 0; i < initVal.list.size(); i++)
+        {
+            int beforepos = indexList[depth - 1];
+            assignInitVal(alloca, lValType->get_array_element_type(), isConstant, initVal.list[i], &*builder,  module, false);
+
+            bool upmatch = false;
+            if (beforepos == indexList[depth - 1])
+                upmatch = true;
+            else
+                for (auto j = depth; j < indexList.size(); j++)
+                {
+                    if (indexList[j] != 0)
+                    {
+                        upmatch = true;
+                        break;
+                    }
+                }
+            if (initVal.list[i].isValue)
+                upmatch = false;
+            if (upmatch)
+            {
+                for (auto j = depth; j < indexList.size(); j++)
+                {
+                    indexList[j] = 0;
+                }
+                for (auto j = depth - 1;; j--)
+                {
+                    indexList[j]++;
+                    if (j > 0 && indexList[j] == indexMax[j])
+                        indexList[j] = 0;
+                    else
+                        break;
+                }
+            }
+        }
+        depth--;
+    }
+    else // 不是数组，直接赋值
+    {
+        if (depth < indexMax.size()) // 给的初始值深度不够，自动加深
+        {
+            depth++;
+            assignInitVal(alloca, lValType->get_array_element_type(), isConstant, initVal, &*builder,  module, false);
+            depth--;
+            return;
+        }
+
+        if (alloca != NULL) // 非空说明是局部变量，要
+        {
+            if (alloca->get_type()->get_pointer_element_type()->is_array_type()) // 是数组，要先取指针
+            {
+                std::vector<Value *> indexListforGep;
+                indexListforGep.push_back(ConstantInt::get(0, module));
+                for (std::size_t i = 0; i < indexList.size(); i++)
+                {
+                    indexListforGep.push_back(ConstantInt::get(indexList[i], module));
+                }
+                auto aGep = builder->create_gep(alloca, indexListforGep);
+                Assign(aGep, initVal.expr ,&*builder);
+            }
+            else
+                Assign(alloca, initVal.expr ,&*builder);
+        }
+        Constant *tmp;
+        if (isConstant)
+        {
+
+            // float=int
+            if (dynamic_cast<ConstantInt *>(initVal.expr) && lValType == FLOAT_T)
+            {
+                int val = ((ConstantInt *)initVal.expr)->get_value();
+                tmp = ConstantFP::get((float)val, module);
+            }
+            // int=float
+            else if (dynamic_cast<ConstantFP *>(initVal.expr) && lValType == INT32_T)
+            {
+                float val = ((ConstantFP *)initVal.expr)->get_value();
+                tmp = ConstantInt::get((int)val, module);
+            }
+            else
+            {
+                tmp = (Constant *)initVal.expr;
+            }
+            int pos = 0;
+            for (int i = 0; i < indexMax.size(); i++)
+            {
+                pos *= indexMax[i];
+                pos += indexList[i];
+            }
+            tmpforconst[pos] = tmp;
+        }
+        // 处理成功，下标++
+        if (depth > 0)
+        {
+            for (auto j = depth; j < indexList.size(); j++)
+            {
+                indexList[j] = 0;
+            }
+            for (auto j = depth - 1;; j--)
+            {
+                indexList[j]++;
+                if (j > 0 && indexList[j] == indexMax[j])
+                    indexList[j] = 0;
+                else
+                    break;
+            }
+        }
+        // 处理成功，下标++ end
+    }
+}
 
 Value *CminusfBuilder::visit(ASTVarDef &node)
 {
-//    struct ASTVarDef : ASTGlobalDef, ASTStmt
-// {
-//     bool is_constant;
-//     bool is_init;
-//     virtual Value *accept(ASTVisitor &) override final;
-//     virtual ~ASTVarDef() = default;
-//     SysYType type_;
-//     std::string id;
-//     std::vector<std::shared_ptr<ASTAddExp>> arr_len;
-//     std::shared_ptr<ASTInitVal> init_val;
-// };
+    //    struct ASTVarDef : ASTGlobalDef, ASTStmt
+    // {
+    //     bool is_constant;
+    //     bool is_init;
+    //     virtual Value *accept(ASTVisitor &) override final;
+    //     virtual ~ASTVarDef() = default;
+    //     SysYType type_;
+    //     std::string id;
+    //     std::vector<std::shared_ptr<ASTAddExp>> arr_len;
+    //     std::shared_ptr<ASTInitVal> init_val;
+    // };
     auto name = node.id;
     auto element_type = node.type_ == TYPE_INT ? INT32_T : FLOAT_T;
-    auto *lvaltype = element_type;
-    for(int i = node.arr_len.size() - 1; i >= 0; i--)
+
+    Type *lValType;
+    lValType = element_type;
+    for (int i = node.arr_len.size() - 1; i >= 0; i--)
     {
         auto *len = node.arr_len[i]->accept(*this);
-        lvaltype = ArrayType::get(lvaltype, ((ConstantInt *)len)->get_value());
+        lValType = ArrayType::get(lValType, ((ConstantInt *)len)->get_value());
+    }
+    if (scope.in_global())
+    {
+        GlobalVariable *global_alloca;
+        bool get_const = false;
+        // 显式初始化
+        if (node.is_init)
+        {
+            // 进入InitVal
+            get_const = true;
+            node.init_val->accept(*this);
+            get_const = false;
+            indexList.clear();
+            indexMax.clear();
+            depth = 0;
+            assignInitVal(NULL, lValType, true, recentInitItem, &*builder,   module.get(), true);
+            global_alloca = GlobalVariable::create(name, module.get(), lValType, node.is_constant, parseConst(0, 0, lValType));
+        }
+        // 未初始化，全局变量也需要赋值为0
+        else
+            global_alloca = GlobalVariable::create(name, module.get(), lValType, node.is_constant, ConstantZero::get(lValType, module.get()));
+        // 插入符号表
+        scope.push(name, global_alloca);
+        // 常量插入常量表
+        if (node.is_constant)
+            Insert(name, global_alloca->get_init());
     }
     return nullptr;
 }

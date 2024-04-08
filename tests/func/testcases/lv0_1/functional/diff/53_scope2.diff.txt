@@ -1,6 +1,0 @@
---- /home/waang/cowork/tests/func/testcases/lv0_1/functional/final_test2/53_scope2.txt	2024-02-21 19:01:39.075678395 +0800
-+++ /home/waang/cowork/tests/func/testcases/lv0_1/functional/53_scope2.out	2024-02-21 18:42:36.680406690 +0800
-@@ -1 +1,2 @@
---4062
-+-40
-+62

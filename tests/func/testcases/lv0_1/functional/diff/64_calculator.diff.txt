@@ -1,6 +1,0 @@
---- /home/waang/cowork/tests/func/testcases/lv0_1/functional/final_test2/64_calculator.txt	2024-02-21 19:01:41.039630923 +0800
-+++ /home/waang/cowork/tests/func/testcases/lv0_1/functional/64_calculator.out	2024-02-21 18:55:26.330895210 +0800
-@@ -1 +1,2 @@
--127
-+2
-+0

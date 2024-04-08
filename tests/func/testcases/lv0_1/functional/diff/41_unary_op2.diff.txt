@@ -1,6 +1,0 @@
---- /home/waang/cowork/tests/func/testcases/lv0_1/functional/final_test2/41_unary_op2.txt	2024-02-21 19:01:37.627713460 +0800
-+++ /home/waang/cowork/tests/func/testcases/lv0_1/functional/41_unary_op2.out	2024-02-21 18:42:36.680406690 +0800
-@@ -1 +1,2 @@
--127
-+4
-+0

@@ -1,7 +1,0 @@
---- /home/waang/cowork/tests/func/testcases/lv0_1/functional/final_test2/91_many_locals2.txt	2024-02-21 19:01:51.467380550 +0800
-+++ /home/waang/cowork/tests/func/testcases/lv0_1/functional/91_many_locals2.out	2024-02-21 18:55:33.570761653 +0800
-@@ -1 +1,3 @@
--127
-+01234567891011121314151617181920212223242526272829
-+6
-+25

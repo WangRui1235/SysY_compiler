@@ -1,5 +1,0 @@
---- /home/waang/cowork/tests/func/testcases/lv0_1/functional/final_test2/42_empty_stmt.txt	2024-02-21 19:01:37.827708613 +0800
-+++ /home/waang/cowork/tests/func/testcases/lv0_1/functional/42_empty_stmt.out	2024-02-21 18:42:36.680406690 +0800
-@@ -1 +1 @@
--127
-+21

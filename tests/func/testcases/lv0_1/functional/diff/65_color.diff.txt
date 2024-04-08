@@ -1,6 +1,0 @@
---- /home/waang/cowork/tests/func/testcases/lv0_1/functional/final_test2/65_color.txt	2024-02-21 19:01:41.255625711 +0800
-+++ /home/waang/cowork/tests/func/testcases/lv0_1/functional/65_color.out	2024-02-21 18:55:26.538893686 +0800
-@@ -1 +1,2 @@
--127
-+39480
-+56

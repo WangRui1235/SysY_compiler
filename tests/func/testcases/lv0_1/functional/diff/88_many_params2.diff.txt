@@ -1,8 +1,0 @@
---- /home/waang/cowork/tests/func/testcases/lv0_1/functional/final_test2/88_many_params2.txt	2024-02-21 19:01:50.983392106 +0800
-+++ /home/waang/cowork/tests/func/testcases/lv0_1/functional/88_many_params2.out	2024-02-21 18:55:32.842789397 +0800
-@@ -1 +1,4 @@
--127
-+0123000009
-+9
-+805 3612 2695 1778 861 3668 2751 1834 917 0 
-+0

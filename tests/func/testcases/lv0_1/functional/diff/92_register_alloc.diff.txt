@@ -1,6 +1,0 @@
---- /home/waang/cowork/tests/func/testcases/lv0_1/functional/final_test2/92_register_alloc.txt	2024-02-21 19:01:51.603377304 +0800
-+++ /home/waang/cowork/tests/func/testcases/lv0_1/functional/92_register_alloc.out	2024-02-21 18:55:33.890749466 +0800
-@@ -1 +1,2 @@
--194194
-+194
-+194

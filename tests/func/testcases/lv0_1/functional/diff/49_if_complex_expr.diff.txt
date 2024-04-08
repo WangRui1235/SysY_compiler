@@ -1,6 +1,0 @@
---- /home/waang/cowork/tests/func/testcases/lv0_1/functional/final_test2/49_if_complex_expr.txt	2024-02-21 19:01:38.587690209 +0800
-+++ /home/waang/cowork/tests/func/testcases/lv0_1/functional/49_if_complex_expr.out	2024-02-21 18:42:36.680406690 +0800
-@@ -1 +1,2 @@
--20
-+2
-+0

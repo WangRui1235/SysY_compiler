@@ -1,6 +1,0 @@
---- /home/waang/cowork/tests/func/testcases/lv0_1/functional/final_test2/70_dijkstra.txt	2024-02-21 19:01:42.183603322 +0800
-+++ /home/waang/cowork/tests/func/testcases/lv0_1/functional/70_dijkstra.out	2024-02-21 18:55:27.930883479 +0800
-@@ -1,2 +1,2 @@
--12 12 12 12 12 12 
-+0 1 8 4 13 17 
- 0

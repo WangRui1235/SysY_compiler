@@ -1,6 +1,0 @@
---- /home/waang/cowork/tests/func/testcases/lv0_1/functional/final_test2/84_long_array2.txt	2024-02-21 19:01:44.659543694 +0800
-+++ /home/waang/cowork/tests/func/testcases/lv0_1/functional/84_long_array2.out	2024-02-21 18:55:31.922824494 +0800
-@@ -1 +1,2 @@
--127
-+3
-+0

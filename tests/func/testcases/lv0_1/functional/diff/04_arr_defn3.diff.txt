@@ -1,5 +1,0 @@
---- /home/waang/cowork/tests/func/testcases/lv0_1/functional/final_test2/04_arr_defn3.txt	2024-02-21 19:01:33.127822766 +0800
-+++ /home/waang/cowork/tests/func/testcases/lv0_1/functional/04_arr_defn3.out	2024-02-21 18:42:36.676406717 +0800
-@@ -1 +1 @@
--10
-+14

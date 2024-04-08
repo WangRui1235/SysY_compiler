@@ -1,6 +1,0 @@
---- /home/waang/cowork/tests/func/testcases/lv0_1/functional/final_test2/68_brainfk.txt	2024-02-21 19:01:41.847611426 +0800
-+++ /home/waang/cowork/tests/func/testcases/lv0_1/functional/68_brainfk.out	2024-02-21 18:55:27.262888375 +0800
-@@ -1 +1,2 @@
--127
-+I'm Suzumiya Haruhi from the East Junior High School, and I'm not interested in ordinary humans. If there were an alien, a time traveller, an otherworlder or a superhero among you, please come to meet me! That's all.
-+0

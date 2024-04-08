@@ -1,6 +1,0 @@
---- /home/waang/cowork/tests/func/testcases/lv0_1/functional/final_test2/21_if_test2.txt	2024-02-21 19:01:35.155773440 +0800
-+++ /home/waang/cowork/tests/func/testcases/lv0_1/functional/21_if_test2.out	2024-02-21 18:42:36.676406717 +0800
-@@ -1 +1,2 @@
---50
-+-5
-+0

@@ -1,6 +1,0 @@
---- /home/waang/cowork/tests/func/testcases/lv0_1/functional/final_test2/66_exgcd.txt	2024-02-21 19:01:41.395622335 +0800
-+++ /home/waang/cowork/tests/func/testcases/lv0_1/functional/66_exgcd.out	2024-02-21 18:55:26.698892511 +0800
-@@ -1 +1,2 @@
--130
-+13
-+0

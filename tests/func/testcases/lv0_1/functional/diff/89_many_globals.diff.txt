@@ -1,6 +1,0 @@
---- /home/waang/cowork/tests/func/testcases/lv0_1/functional/final_test2/89_many_globals.txt	2024-02-21 19:01:51.123388763 +0800
-+++ /home/waang/cowork/tests/func/testcases/lv0_1/functional/89_many_globals.out	2024-02-21 18:55:33.154777504 +0800
-@@ -1 +1,2 @@
--28221180
-+2822118
-+0

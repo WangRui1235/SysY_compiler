@@ -1,8 +1,0 @@
---- /home/waang/cowork/tests/func/testcases/lv0_1/functional/final_test2/96_matrix_add.txt	2024-02-21 19:01:52.423357737 +0800
-+++ /home/waang/cowork/tests/func/testcases/lv0_1/functional/96_matrix_add.out	2024-02-21 18:55:35.078704272 +0800
-@@ -1 +1,4 @@
--127
-+024
-+024
-+024
-+0
