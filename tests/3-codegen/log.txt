@@ -1,7 +1,11 @@
 ==========../testcases/functional/00_main.sy==========
+3
+							      )	3
 ==========../testcases/functional/01_var_defn2.sy==========
 ==========../testcases/functional/02_var_defn3.sy==========
 ==========../testcases/functional/03_arr_defn2.sy==========
+0
+							      )	0
 ==========../testcases/functional/04_arr_defn3.sy==========
 ==========../testcases/functional/05_arr_defn4.sy==========
 ==========../testcases/functional/06_const_var_defn2.sy==========

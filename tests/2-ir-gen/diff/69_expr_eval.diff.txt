@@ -1,0 +1,12 @@
+--- /home/waang/compilerLab/tests/2-ir-gen/output/69_expr_eval.txt	2024-04-09 14:43:37.619929499 +0800
++++ /home/waang/compilerLab/tests/testcases/functional/69_expr_eval.out	2024-03-04 22:34:14.803146626 +0800
+@@ -1 +1,8 @@
+-127
++-820
++696
++1220
++panic!
++-1
++panic!
++-1
++0

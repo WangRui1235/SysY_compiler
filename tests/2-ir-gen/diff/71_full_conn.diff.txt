@@ -1,0 +1,13 @@
+--- /home/waang/compilerLab/tests/2-ir-gen/output/71_full_conn.txt	2024-04-09 14:43:37.827928832 +0800
++++ /home/waang/compilerLab/tests/testcases/functional/71_full_conn.out	2024-03-04 22:34:14.803146626 +0800
+@@ -1,7 +1,7 @@
+-cat
+-cat
+-dog
+ dog
++cat
+ dog
+ dog
++cat
++cat
+ 0

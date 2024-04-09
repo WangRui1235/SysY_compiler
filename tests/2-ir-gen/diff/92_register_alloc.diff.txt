@@ -1,0 +1,6 @@
+--- /home/waang/compilerLab/tests/2-ir-gen/output/92_register_alloc.txt	2024-04-09 14:43:40.167921325 +0800
++++ /home/waang/compilerLab/tests/testcases/functional/92_register_alloc.out	2024-03-04 22:34:14.819146113 +0800
+@@ -1 +1,2 @@
+-194194
++194
++194

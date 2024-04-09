@@ -1,0 +1,6 @@
+--- /home/waang/compilerLab/tests/2-ir-gen/output/49_if_complex_expr.txt	2024-04-09 14:43:35.587936015 +0800
++++ /home/waang/compilerLab/tests/testcases/functional/49_if_complex_expr.out	2024-03-04 22:34:14.799146755 +0800
+@@ -1 +1,2 @@
+-20
++2
++0

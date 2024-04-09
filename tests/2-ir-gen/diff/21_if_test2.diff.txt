@@ -1,0 +1,6 @@
+--- /home/waang/compilerLab/tests/2-ir-gen/output/21_if_test2.txt	2024-04-09 14:43:32.819944882 +0800
++++ /home/waang/compilerLab/tests/testcases/functional/21_if_test2.out	2024-03-04 22:34:14.783147268 +0800
+@@ -1 +1,2 @@
+--50
++-5
++0

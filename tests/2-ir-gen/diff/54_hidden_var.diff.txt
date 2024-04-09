@@ -1,0 +1,10 @@
+--- /home/waang/compilerLab/tests/2-ir-gen/output/54_hidden_var.txt	2024-04-09 14:43:36.083934425 +0800
++++ /home/waang/compilerLab/tests/testcases/functional/54_hidden_var.out	2024-03-04 22:34:14.799146755 +0800
+@@ -1,6 +1,6 @@
+ 331
+ 1
+-111
++218
+ 5
+ 6719
+ 0

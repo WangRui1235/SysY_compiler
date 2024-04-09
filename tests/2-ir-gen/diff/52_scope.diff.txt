@@ -1,0 +1,6 @@
+--- /home/waang/compilerLab/tests/2-ir-gen/output/52_scope.txt	2024-04-09 14:43:35.887935053 +0800
++++ /home/waang/compilerLab/tests/testcases/functional/52_scope.out	2024-03-04 22:34:14.799146755 +0800
+@@ -1 +1,2 @@
+-10
++1
++0

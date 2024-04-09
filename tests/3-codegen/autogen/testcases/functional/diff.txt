@@ -1,7 +1,0 @@
---- /home/waang/cowork/tests/func/functional/final_test2/99_matrix_tran.txt	2024-02-21 17:25:33.621117009 +0800
-+++ /home/waang/cowork/tests/func/functional/99_matrix_tran.out	2024-02-21 15:28:27.119684244 +0800
-@@ -0,0 +1,4 @@
-+000
-+111
-+222
-+0

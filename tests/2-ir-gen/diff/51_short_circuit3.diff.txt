@@ -1,0 +1,9 @@
+--- /home/waang/compilerLab/tests/2-ir-gen/output/51_short_circuit3.txt	2024-04-09 14:43:35.779935399 +0800
++++ /home/waang/compilerLab/tests/testcases/functional/51_short_circuit3.out	2024-03-04 22:34:14.799146755 +0800
+@@ -1 +1,5 @@
+-127
++0 3 0 3
++3 3
++ADF
++CIJK
++0

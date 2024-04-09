@@ -1,9 +1,0 @@
-cat
-cat
-dog
-dog
-dog
-dog
-
-0
-generation success

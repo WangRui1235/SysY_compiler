@@ -1,4 +1,0 @@
-not ok
-
-1
-generation success

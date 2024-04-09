@@ -1,0 +1,15 @@
+--- /home/waang/compilerLab/tests/2-ir-gen/output/57_sort_test3.txt	2024-04-09 14:43:36.383933463 +0800
++++ /home/waang/compilerLab/tests/testcases/functional/57_sort_test3.out	2024-03-04 22:34:14.799146755 +0800
+@@ -1 +1,11 @@
+-127
++0
++1
++2
++3
++4
++5
++6
++7
++8
++9
++0

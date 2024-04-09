@@ -1,0 +1,6 @@
+--- /home/waang/compilerLab/tests/2-ir-gen/output/66_exgcd.txt	2024-04-09 14:43:37.311930488 +0800
++++ /home/waang/compilerLab/tests/testcases/functional/66_exgcd.out	2024-03-04 22:34:14.799146755 +0800
+@@ -1 +1,2 @@
+-130
++13
++0

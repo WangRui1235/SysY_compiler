@@ -1,0 +1,6 @@
+--- /home/waang/compilerLab/tests/2-ir-gen/output/39_op_priority5.txt	2024-04-09 14:43:34.587939219 +0800
++++ /home/waang/compilerLab/tests/testcases/functional/39_op_priority5.out	2024-03-04 22:34:14.791147012 +0800
+@@ -1 +1,2 @@
+-11
++1
++1

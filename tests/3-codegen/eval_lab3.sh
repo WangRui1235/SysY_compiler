@@ -10,7 +10,7 @@ LOG=log.txt
 usage() {
 	cat <<JIANMU
 Usage: $0 [path-to-testcases] [type]
-path-to-testcases: './testcases' or '../testcases_general' or 'self made cases'
+path-to-testcases: './testcases' or '../../testcases_general' or 'self made cases'
 type: 'debug' or 'test', debug will output .ll file
 JIANMU
 	exit 0
@@ -50,6 +50,8 @@ mkdir -p $output_dir
 
 truncate -s 0 $LOG
 
+counter=0
+
 if [ $debug_mode = false ]; then
 	exec 3>/dev/null 4>&1 5>&2 1>&3 2>&3
 else
@@ -75,16 +77,20 @@ for case in $testcases; do
 	echo -n "$case_base_name..."
 	# if debug mode on, generate .ll also
 	if [ $debug_mode = true ]; then
-		bash -c "cminusfc -mem2reg -emit-llvm $case -o $ll_file" >>$LOG 2>&1
+		bash -c "cminusfc -emit-llvm $case -o $ll_file" >>$LOG 2>&1
 	fi
 	# cminusfc compile to .s
-	bash -c "cminusfc -S -mem2reg $case -o $asm_file" >>$LOG 2>&1
+	bash -c "cminusfc -S $case -o $asm_file" >>$LOG 2>&1
+
+	
 	check_return_value $? 0 "CE" "cminusfc compiler error" || continue
 
 	# gcc compile asm to executable
 	loongarch64-unknown-linux-gnu-gcc -static \
-		"$asm_file" "$io_dir"/io.c -o "$exe_file" \
+		"$asm_file" "$io_dir"/sylib.c -o "$exe_file" \
 		>>$LOG
+
+	
 	check_return_value $? 0 "CE" "gcc compiler error" || continue
 
 	# qemu run
@@ -98,12 +104,20 @@ for case in $testcases; do
 	# remove trailing null byte in the end line
 	sed -i "\$s/\x00*$//" "$out_file"
 	# append return value
-	echo $ret >>"$out_file"
+	echo -e "\n$ret" >>"$out_file"
 
 	# compare output
-	diff --strip-trailing-cr "$std_out_file" "$out_file" -y >>$LOG
+	diff -B "$std_out_file" "$out_file" -y >>$LOG
+
+	
 	check_return_value $? 0 "WA" "output differ, check $std_out_file and $out_file" || continue
 
+	
+
 	# ok
+	counter=$((counter + 1))
 	printf "\033[1;32mOK\033[0m\n"
+
+
 done
+	echo "计数器的值为: $counter"

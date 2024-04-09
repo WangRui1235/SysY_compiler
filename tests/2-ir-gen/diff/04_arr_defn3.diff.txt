@@ -1,0 +1,5 @@
+--- /home/waang/compilerLab/tests/2-ir-gen/output/04_arr_defn3.txt	2024-04-09 14:43:31.043950564 +0800
++++ /home/waang/compilerLab/tests/testcases/functional/04_arr_defn3.out	2024-03-04 22:34:14.779147397 +0800
+@@ -1 +1 @@
+-10
++14
