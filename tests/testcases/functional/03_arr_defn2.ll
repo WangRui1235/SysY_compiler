@@ -1,5 +1,5 @@
 ; ModuleID = 'cminus'
-source_filename = "/home/waang/compilerLab/tests/testcases/functional/03_arr_defn2.sy"
+source_filename = "/home/hq/SysY/tests/testcases/functional/03_arr_defn2.sy"
 
 @a = global [10 x [10 x i32 ]] zeroinitializer
 declare i32  @getint()

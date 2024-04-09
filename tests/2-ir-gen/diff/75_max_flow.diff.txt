@@ -1,5 +1,5 @@
---- /home/waang/compilerLab/tests/2-ir-gen/output/75_max_flow.txt	2024-04-09 14:43:38.327927229 +0800
-+++ /home/waang/compilerLab/tests/testcases/functional/75_max_flow.out	2024-03-04 22:34:14.811146370 +0800
+--- /home/hq/SysY/tests/2-ir-gen/output/75_max_flow.txt	2024-04-09 07:15:28.293817904 +0000
++++ /home/hq/SysY/tests/testcases/functional/75_max_flow.out	2024-04-09 07:14:00.933296906 +0000
 @@ -1 +1,2 @@
 -139
 +77

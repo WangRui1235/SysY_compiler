@@ -1,5 +1,5 @@
---- /home/waang/compilerLab/tests/2-ir-gen/output/44_stmt_expr.txt	2024-04-09 14:43:35.095937592 +0800
-+++ /home/waang/compilerLab/tests/testcases/functional/44_stmt_expr.out	2024-03-04 22:34:14.799146755 +0800
+--- /home/hq/SysY/tests/2-ir-gen/output/44_stmt_expr.txt	2024-04-09 07:15:20.741772868 +0000
++++ /home/hq/SysY/tests/testcases/functional/44_stmt_expr.out	2024-04-09 07:14:00.933296906 +0000
 @@ -1 +1,2 @@
 -10240
 +1024

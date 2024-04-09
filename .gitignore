@@ -1,2 +1,8 @@
 build/
+tests/2-ir-gen/diff/
+tests/2-ir-gen/output/
+tests/3-codegen/diff/
+tests/3-codegen/output/
+tests/4-mem2reg/diff/
+tests/4-mem2reg/output/
 

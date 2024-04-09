@@ -1,5 +1,5 @@
---- /home/waang/compilerLab/tests/2-ir-gen/output/84_long_array2.txt	2024-04-09 14:43:39.291924136 +0800
-+++ /home/waang/compilerLab/tests/testcases/functional/84_long_array2.out	2024-03-04 22:34:14.811146370 +0800
+--- /home/hq/SysY/tests/2-ir-gen/output/84_long_array2.txt	2024-04-09 07:15:30.341830117 +0000
++++ /home/hq/SysY/tests/testcases/functional/84_long_array2.out	2024-04-09 07:14:00.933296906 +0000
 @@ -1 +1,2 @@
 -127
 +3

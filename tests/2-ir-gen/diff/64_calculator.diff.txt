@@ -1,5 +1,5 @@
---- /home/waang/compilerLab/tests/2-ir-gen/output/64_calculator.txt	2024-04-09 14:43:37.091931193 +0800
-+++ /home/waang/compilerLab/tests/testcases/functional/64_calculator.out	2024-03-04 22:34:14.799146755 +0800
+--- /home/hq/SysY/tests/2-ir-gen/output/64_calculator.txt	2024-04-09 07:15:25.709802495 +0000
++++ /home/hq/SysY/tests/testcases/functional/64_calculator.out	2024-04-09 07:14:00.933296906 +0000
 @@ -1 +1,2 @@
 -127
 +2

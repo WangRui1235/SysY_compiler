@@ -1,5 +1,5 @@
---- /home/waang/compilerLab/tests/2-ir-gen/output/48_assign_complex_expr.txt	2024-04-09 14:43:35.491936322 +0800
-+++ /home/waang/compilerLab/tests/testcases/functional/48_assign_complex_expr.out	2024-03-04 22:34:14.799146755 +0800
+--- /home/hq/SysY/tests/2-ir-gen/output/48_assign_complex_expr.txt	2024-04-09 07:15:21.573777827 +0000
++++ /home/hq/SysY/tests/testcases/functional/48_assign_complex_expr.out	2024-04-09 07:14:00.933296906 +0000
 @@ -1 +1,2 @@
 --1710
 +-171
