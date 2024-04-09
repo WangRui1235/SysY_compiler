@@ -145,8 +145,9 @@ struct ASTStmt : virtual ASTNode
 
 struct ASTVarDef : ASTGlobalDef, ASTStmt
 {
-    bool is_constant;
+    bool is_const_or_not=false;
     bool is_init;
+    int a=0;
     virtual Value *accept(ASTVisitor &) override final;
     virtual ~ASTVarDef() = default;
     SysYType type_;

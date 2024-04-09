@@ -1,2 +1,2 @@
-127
-generation failure
+4
+generation success

@@ -58,7 +58,31 @@ bool promote(IRBuilder *builder, Value **l_val_p, Value **r_val_p)
     }
     return is_int;
 }
-
+/* 常量符号表 */
+std::list<std::map<std::string, Constant *>> const_table;
+/* 多维数组处理 */ ///////////
+std::size_t depth = 0;
+std::vector<int> indexMax;
+std::vector<int> indexList;
+// 将变常量插入符号表
+bool Insert(std::string name, Constant *val)
+{
+    //插入到当前作用域的符号表
+    auto result = const_table.front().insert(std::pair<std::string, Constant *>(name, val));
+    return result.second;
+}
+void make_new_table()
+{
+    std::map<std::string, Constant *> new_table;
+    const_table.push_front(new_table);
+    return;
+}
+// 退出作用域，删除当前作用域的符号表
+void delete_table()
+{
+    const_table.pop_front();
+    return;
+}
 /*
  * use CMinusfBuilder::Scope to construct scopes
  * scope.enter: enter a new scope
@@ -85,6 +109,7 @@ Value *CminusfBuilder::visit(ASTSTARTPOINT &node)
     INT32PTR_T = module->get_int32_ptr_type();
     FLOAT_T = module->get_float_type();
     FLOATPTR_T = module->get_float_ptr_type();
+    make_new_table();
     for (auto &global_def : node.global_defs)
     {
         ret_val = global_def->accept(*this);
@@ -140,6 +165,7 @@ Value *CminusfBuilder::visit(ASTFuncDef &node)
     auto *func = Function::create(fun_type, node.id, module.get());
     scope.push(node.id, func);
     context.func = func;
+    make_new_table();
     auto *funBB = BasicBlock::create(module.get(), "entry", func);
     builder->set_insert_point(funBB);
     scope.enter();
@@ -434,19 +460,7 @@ Value *CminusfBuilder::visit(ASTBreakStmt &node)
     return builder->create_br(nextBB_while);
 }
 
-/* 常量符号表 */
-std::list<std::map<std::string, Constant *>> const_table;
-/* 多维数组处理 */ ///////////
-std::size_t depth = 0;
-std::vector<int> indexMax;
-std::vector<int> indexList;
-// 将变常量插入符号表
-bool Insert(std::string name, Constant *val)
-{
-    // 插入到当前作用域的符号表
-    auto result = const_table.front().insert(std::pair<std::string, Constant *>(name, val));
-    return result.second;
-}
+
 // 初始化向量
 typedef struct InitItem
 {
@@ -548,7 +562,7 @@ Constant *parseConst(int nowdepth, int offset, Type *type)
     return ConstantArray::get((ArrayType *)type, tmp);
 }
 
-void assignInitVal(AllocaInst *alloca, Type *lValType, bool isConstant, InitItem initVal, IRBuilder *builder, Module *module, bool firsttime)
+void assignInitVal(AllocaInst *alloca, Type *lValType, int isConstant, InitItem initVal, IRBuilder *builder, Module *module, bool firsttime)
 {
     if (firsttime)
     {
@@ -696,12 +710,12 @@ void assignInitVal(AllocaInst *alloca, Type *lValType, bool isConstant, InitItem
         // 处理成功，下标++ end
     }
 }
-bool get_const;  
+bool get_const;
 Value *CminusfBuilder::visit(ASTVarDef &node)
 {
     //    struct ASTVarDef : ASTGlobalDef, ASTStmt
     // {
-    //     bool is_constant;
+    //     bool a;
     //     bool is_init;
     //     virtual Value *accept(ASTVisitor &) override final;
     //     virtual ~ASTVarDef() = default;
@@ -723,7 +737,7 @@ Value *CminusfBuilder::visit(ASTVarDef &node)
     if (scope.in_global())
     {
         GlobalVariable *global_alloca;
-         get_const = false;
+        get_const = false;
         // 显式初始化
         if (node.is_init)
         {
@@ -735,15 +749,15 @@ Value *CminusfBuilder::visit(ASTVarDef &node)
             indexMax.clear();
             depth = 0;
             assignInitVal(NULL, lValType, true, recentInitItem, &*builder, module.get(), true);
-            global_alloca = GlobalVariable::create(name, module.get(), lValType, node.is_constant, parseConst(0, 0, lValType));
+            global_alloca = GlobalVariable::create(name, module.get(), lValType, node.a, parseConst(0, 0, lValType));
         }
         // 未初始化，全局变量也需要赋值为0
         else
-            global_alloca = GlobalVariable::create(name, module.get(), lValType, node.is_constant, ConstantZero::get(lValType, module.get()));
+            global_alloca = GlobalVariable::create(name, module.get(), lValType, node.a, ConstantZero::get(lValType, module.get()));
         // 插入符号表
         scope.push(name, global_alloca);
         // 常量插入常量表
-        if (node.is_constant)
+        if (node.a)
             Insert(name, global_alloca->get_init());
     }
     else
@@ -755,7 +769,7 @@ Value *CminusfBuilder::visit(ASTVarDef &node)
         if (node.is_init)
         {
             // 进入InitVal
-            if (node.is_constant)
+            if (node.a)
                 get_const = true;
             node.init_val->accept(*this);
             get_const = false;
@@ -764,8 +778,8 @@ Value *CminusfBuilder::visit(ASTVarDef &node)
             indexList.clear();
             indexMax.clear();
             depth = 0;
-            assignInitVal(alloca, lValType, node.is_constant, recentInitItem, &*builder, module.get(), true);
-            if (node.is_constant)
+            assignInitVal(alloca, lValType, node.a, recentInitItem, &*builder, module.get(), true);
+            if (node.a)
             {
                 Insert(name, parseConst(0, 0, lValType));
             }
@@ -787,8 +801,9 @@ Value *CminusfBuilder::visit(ASTBlock &node)
     else
     {
         scope.enter();
+        make_new_table();
     }
-
+  
     for (auto &stmt : node.Stmts)
     {
 
@@ -802,76 +817,134 @@ Value *CminusfBuilder::visit(ASTBlock &node)
     if (need_exit_scope)
     {
         scope.exit();
+        delete_table();
     }
     return nullptr;
 }
 
+Constant *Lookup(std::string name)
+{
+    // 首先在当前函数中从最近的scope开始寻找
+    for (auto i = const_table.begin(); i != const_table.end(); i++)
+    {
+        auto iter = i->find(name);
+        if (iter != i->end())
+            return iter->second;
+    }
+    return NULL;
+}
+
 Value *CminusfBuilder::visit(ASTLVal &node)
 {
-    auto *var = scope.find(node.id);
-    auto is_int =
-        var->get_type()->get_pointer_element_type()->is_integer_type();
-    auto is_float =
-        var->get_type()->get_pointer_element_type()->is_float_type();
-    auto is_ptr =
-        var->get_type()->get_pointer_element_type()->is_pointer_type();
-    bool should_return_lvalue = context.require_lvalue;
-    context.require_lvalue = false;
-    Value *ret_val = nullptr;
+    /*     auto *var = scope.find(node.id);
+        auto is_int =
+            var->get_type()->get_pointer_element_type()->is_integer_type();
+        auto is_float =
+            var->get_type()->get_pointer_element_type()->is_float_type();
+        auto is_ptr =
+            var->get_type()->get_pointer_element_type()->is_pointer_type();
+        bool should_return_lvalue = context.require_lvalue;
+        context.require_lvalue = false;
+        Value *ret_val = nullptr;
 
-    if (node.Exps.empty())
-    {
-        if (should_return_lvalue)
+        if (node.Exps.empty())
         {
-            ret_val = var;
-            context.require_lvalue = false;
-        }
-        else
-        {
-            //  var->get_type()->;
-            if (is_int || is_float || is_ptr)
+            if (should_return_lvalue)
             {
-                ret_val = builder->create_load(var);
+                ret_val = var;
+                context.require_lvalue = false;
             }
             else
             {
-                ret_val =
-                    builder->create_gep(var, {CONST_INT(0), CONST_INT(0)});
+
+                if (is_int || is_float || is_ptr)
+                {
+                    ret_val = builder->create_load(var);
+                }
+                else
+                {
+                    ret_val =
+                        builder->create_gep(var, {CONST_INT(0), CONST_INT(0)});
+                }
             }
         }
+        else
+        {
+            auto *val = node.Exps[0]->accept(*this);
+
+            for (auto exp : node.Exps)
+            {
+                auto *value = exp->accept(*this);
+            }
+            Value *tmp_ptr = nullptr;
+            if (is_int || is_float)
+            {
+                tmp_ptr = builder->create_gep(var, {val});
+            }
+            else if (is_ptr)
+            {
+                auto *array_load = builder->create_load(var);
+                tmp_ptr = builder->create_gep(array_load, {val});
+            }
+            else
+            {
+                tmp_ptr = builder->create_gep(var, {CONST_INT(0), val});
+            }
+            if (should_return_lvalue)
+            {
+                ret_val = tmp_ptr;
+                context.require_lvalue = false;
+            }
+            else
+            {
+                ret_val = builder->create_load(tmp_ptr);
+            }
+        } */
+    bool should_return_lval = context.require_lvalue;
+    context.require_lvalue = false;
+    Value *ret_val = nullptr;
+    Value *recent_ptr = nullptr;
+    auto temp = scope.find(node.id);
+    auto temp_const = Lookup(node.id);
+    auto lValType = temp->get_type()->get_pointer_element_type();
+    // 获取常量
+    if (get_const)
+    {
+        recent_ptr = temp;
+        /* if (node.Exps.size() > 0)
+         {
+             for (auto tmp : node.Exps)
+             {
+                 tmp->accept(*this);
+                 if (dynamic_cast<ConstantArray *>(temp_const) && dynamic_cast<ConstantInt *>(recent_value))
+                     temp_const = ((ConstantArray *)temp_const)->get_element_value(((ConstantInt *)recent_value)->get_value());
+             }
+         }*/
+        ret_val = temp_const;
     }
+    // 全局作用域访问左值一定是处理常量,所以接下来一定是局部作用域处理
     else
     {
-        auto *val = node.Exps[0]->accept(*this);
-        // 利用var得到数组维数大小
-
-        for (auto exp : node.Exps)
+        for (auto tmp : node.Exps)
         {
-            auto *value = exp->accept(*this);
+            auto exp = tmp->accept(*this);
+            if (lValType->is_pointer_type())
+            {
+                lValType = lValType->get_pointer_element_type();
+                temp = builder->create_load(temp);
+                temp = builder->create_gep(temp, {exp});
+            }
+            else if (lValType->is_array_type())
+            {
+                lValType = lValType->get_array_element_type();
+                temp = builder->create_gep(temp, {CONST_INT(0), exp});
+            }
         }
-        Value *tmp_ptr = nullptr;
-        if (is_int || is_float)
-        {
-            tmp_ptr = builder->create_gep(var, {val});
-        }
-        else if (is_ptr)
-        {
-            auto *array_load = builder->create_load(var);
-            tmp_ptr = builder->create_gep(array_load, {val});
-        }
-        else
-        {
-            tmp_ptr = builder->create_gep(var, {CONST_INT(0), val});
-        }
-        if (should_return_lvalue)
-        {
-            ret_val = tmp_ptr;
-            context.require_lvalue = false;
-        }
-        else
-        {
-            ret_val = builder->create_load(tmp_ptr);
-        }
+        recent_ptr = temp;
+        if (lValType->is_array_type())
+            ret_val = builder->create_gep(temp, {CONST_INT(0), CONST_INT(0)});
+        else if (!should_return_lval)
+            ret_val = builder->create_load(recent_ptr);
     }
     return ret_val;
 }

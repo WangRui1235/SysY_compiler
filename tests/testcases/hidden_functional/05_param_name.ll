@@ -1,5 +1,5 @@
 ; ModuleID = 'cminus'
-source_filename = "/home/waang/cowork/tests/func/hidden_functional/05_param_name.sy"
+source_filename = "/home/hq/SysY/tests/testcases/hidden_functional/05_param_name.sy"
 
 declare i32  @getint()
 

@@ -11,9 +11,7 @@
               << std::endl;                                \
     std::abort();
 #define _STR_EQ(a, b) (strcmp((a), (b)) == 0)
-
-std::map<std::string, std::string> ConstMap;
-
+int is_const=0;
 void AST::run_visitor(ASTVisitor &visitor) { root->accept(visitor); }
 AST::AST(syntax_tree *s)
 {
@@ -84,7 +82,7 @@ ASTNode *AST::transform_node_iter(syntax_tree_node *n)
             ASTVarDef *var_def = dynamic_cast<ASTVarDef *>(decl.get());
             if (var_def)
             {
-                var_def->is_constant = true;
+                var_def->is_const_or_not = true;
                 if (_STR_EQ(n->children[1]->name, "int"))
                 {
                     var_def->type_ = TYPE_INT;
@@ -107,7 +105,7 @@ ASTNode *AST::transform_node_iter(syntax_tree_node *n)
         for (auto decl : child_node->global_defs)
         {
             ASTVarDef *var_def = dynamic_cast<ASTVarDef *>(decl.get());
-            var_def->is_constant = false;
+            var_def->is_const_or_not = false;
             if (_STR_EQ(n->children[0]->name, "int"))
             {
                 var_def->type_ = TYPE_INT;
@@ -150,6 +148,10 @@ ASTNode *AST::transform_node_iter(syntax_tree_node *n)
         if (n->children_num == 4)
         {
             // 有初始化
+            if (is_const){
+                node->a=1;
+              //node->is_const_or_not = true;
+            }
             node->is_init = true;
             auto child_node = static_cast<ASTInitVal *>(transform_node_iter(n->children[3]));
             node->init_val = std::shared_ptr<ASTInitVal>(child_node);
@@ -369,6 +371,9 @@ ASTNode *AST::transform_node_iter(syntax_tree_node *n)
         }
         return node;
     }
+    // Block: LBRACE BlockItemList RBRACE
+    // BlockItemList: BlockItemList  BlockItem | epsilon
+    // BlockItem: ConstDecl | VarDecl | Stmt
     else if (_STR_EQ(n->name, "Block"))
     {
         auto node = new ASTBlock();
@@ -386,37 +391,88 @@ ASTNode *AST::transform_node_iter(syntax_tree_node *n)
         {
             if (_STR_EQ(q.top()->children[0]->name, "ConstDecl"))
             {
-
+                is_const=1;
                 auto childnode = q.top()->children[0];
                 auto vardeflistnode = childnode->children[2];
-                std::stack<syntax_tree_node *> node_stack;
-                while (vardeflistnode->children_num == 3)
+                if (vardeflistnode->children_num == 1)
                 {
-                    node_stack.push(vardeflistnode->children[2]);
-                    vardeflistnode = vardeflistnode->children[0];
-                }
-                node_stack.push(vardeflistnode->children[0]);
-                while (!node_stack.empty())
-                {
-                    auto child_node = dynamic_cast<ASTVarDef *>(transform_node_iter(node_stack.top()));
-                    auto child_node_shared = std::shared_ptr<ASTVarDef>(child_node);
-                    node->Stmts.push_back(child_node_shared);
-                    node_stack.pop();
-                }
-                for (auto decl : node->Stmts)
-                {
-                    ASTVarDef *var_def = dynamic_cast<ASTVarDef *>(decl.get());
-
-                    var_def->is_constant = true;
-                    if (_STR_EQ(n->children[1]->name, "int"))
+                    auto  node_vardef = std::shared_ptr<ASTVarDef>(dynamic_cast<ASTVarDef *>(transform_node_iter(vardeflistnode->children[0])));
+                    if (_STR_EQ(childnode->children[1]->name, "int"))
                     {
-                        var_def->type_ = TYPE_INT;
+                        node_vardef->type_ = TYPE_INT;
+                        
                     }
                     else
                     {
-                        var_def->type_ = TYPE_FLOAT;
+                        node_vardef->type_ = TYPE_FLOAT;
+                      
+                    }
+                  //  node_vardef->is_const_or_not = true;
+                    node->Stmts.push_back(node_vardef);
+                }
+                while (vardeflistnode->children_num == 3)
+                {
+                    auto node_vardef = std::shared_ptr<ASTVarDef>(dynamic_cast<ASTVarDef *>(transform_node_iter(vardeflistnode->children[2])));
+                    if (_STR_EQ(childnode->children[1]->name, "int"))
+                    {
+                        node_vardef->type_ = TYPE_INT;
+                        node_vardef->is_const_or_not = true;
+                    }
+                    else
+                    {
+                        node_vardef->type_ = TYPE_FLOAT;
+                        node_vardef->is_const_or_not = true;
+                    }
+                    node->Stmts.push_back(node_vardef);
+                    vardeflistnode = vardeflistnode->children[0];
+                    if (vardeflistnode->children_num == 1)
+                    {
+                        if (_STR_EQ(childnode->children[0]->name, "int"))
+                        {
+                            node_vardef->type_ = TYPE_INT;
+                            node_vardef->is_const_or_not = true;
+                        }
+                        else
+                        {
+                            node_vardef->type_ = TYPE_FLOAT;
+                            node_vardef->is_const_or_not = true;
+                        }
+                        node->Stmts.push_back(node_vardef);
                     }
                 }
+         
+                /*
+                                auto childnode = q.top()->children[0];
+                                auto vardeflistnode = childnode->children[2];
+                                std::stack<syntax_tree_node *> node_stack;
+                                while (vardeflistnode->children_num == 3)
+                                {
+                                    node_stack.push(vardeflistnode->children[2]);
+                                    vardeflistnode = vardeflistnode->children[0];
+                                }
+                                node_stack.push(vardeflistnode->children[0]);
+                                while (!node_stack.empty())
+                                {
+                                    auto child_node = dynamic_cast<ASTVarDef *>(transform_node_iter(node_stack.top()));
+                                    auto child_node_shared = std::shared_ptr<ASTVarDef>(child_node);
+                                    node->Stmts.push_back(child_node_shared);
+                                    node_stack.pop();
+                                }
+                                for (auto decl : node->Stmts)
+                                {
+                                    ASTVarDef *var_def = dynamic_cast<ASTVarDef *>(decl.get());
+
+                                    var_def->is_const_or_not = true;
+                                    if (_STR_EQ(childnode->children[1]->name, "int"))
+                                    {
+                                        var_def->type_ = TYPE_INT;
+                                    }
+                                    else
+                                    {
+                                        var_def->type_ = TYPE_FLOAT;
+                                    }
+                                } */
+                                is_const=0;
             }
             else if (_STR_EQ(q.top()->children[0]->name, "VarDecl"))
             {
@@ -426,7 +482,7 @@ ASTNode *AST::transform_node_iter(syntax_tree_node *n)
                 while (vardeflistnode->children_num == 3)
                 {
                     auto node_vardef = std::shared_ptr<ASTVarDef>(dynamic_cast<ASTVarDef *>(transform_node_iter(vardeflistnode->children[2])));
-                    if (_STR_EQ(n->children[0]->name, "int"))
+                    if (_STR_EQ(childnode->children[0]->name, "int"))
                     {
                         node_vardef->type_ = TYPE_INT;
                     }
@@ -439,7 +495,7 @@ ASTNode *AST::transform_node_iter(syntax_tree_node *n)
                 }
                 auto node_vardef = std::shared_ptr<ASTVarDef>(dynamic_cast<ASTVarDef *>(transform_node_iter(vardeflistnode->children[0])));
 
-                if (_STR_EQ(n->children[0]->name, "int"))
+                if (_STR_EQ(childnode->children[0]->name, "int"))
                 {
                     node_vardef->type_ = TYPE_INT;
                 }
@@ -447,8 +503,9 @@ ASTNode *AST::transform_node_iter(syntax_tree_node *n)
                 {
                     node_vardef->type_ = TYPE_FLOAT;
                 }
+                node->Stmts.push_back(node_vardef);
             }
-            if (_STR_EQ(q.top()->children[0]->name, "Stmt"))
+            else if (_STR_EQ(q.top()->children[0]->name, "Stmt"))
             {
                 auto child_node = dynamic_cast<ASTStmt *>(transform_node_iter(q.top()->children[0]));
                 auto child_node_shared = std::shared_ptr<ASTStmt>(child_node);
@@ -540,7 +597,10 @@ ASTNode *AST::transform_node_iter(syntax_tree_node *n)
         auto node = new ASTLVal();
         node->id = n->children[0]->name;
         auto child_node = n->children[1];
-
+        if (_STR_EQ(child_node->children[0]->name, "epsilon"))
+        {
+            return node;
+        }
         while (child_node->children_num == 4)
         {
             auto child_node2 = static_cast<ASTAddExp *>(transform_node_iter(child_node->children[2]));
@@ -865,8 +925,6 @@ Value *ASTPrinter::visit(ASTVarDef &node)
     _DEBUG_PRINT_N_(depth);
     std::cout << "var def" << std::endl;
     add_depth();
-    if (node.is_constant)
-        std::cout << "const ";
     std::cout << node.id;
     for (auto length : node.arr_len)
     {

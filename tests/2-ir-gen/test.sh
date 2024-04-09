@@ -3,7 +3,7 @@
 # 获取脚本所在目录的绝对路径
 script_dir=$(dirname "$(readlink -f "$0")")
 project_dir=$(realpath ../../)
-source_dir=$(realpath "$project_dir"/tests/testcases/func)
+source_dir=$(realpath "$project_dir"/tests/testcases/functional)
 # 设置源代码文件和目标文件的路径
 
 output_dir="$script_dir/output"

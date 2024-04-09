@@ -1,7 +1,7 @@
 ; ModuleID = 'cminus'
-source_filename = "/home/hq/SysY/tests/testcases/functional/01_var_defn2.sy"
+source_filename = "/home/hq/SysY/tests/testcases/func/06_const_var_defn2.sy"
 
-@a = global i32  3
+@a = global i32  10
 @b = global i32  5
 declare i32  @getint()
 
@@ -27,10 +27,6 @@ declare void @putfarray(float)
 
 define i32  @main() {
 label_entry:
-  %op0 = alloca i32 
-  store i32  5, i32 * %op0
-  %op1 = load i32 , i32 * %op0
-  %op2 = load i32 , i32 * @b
-  %op3 = add i32  %op1, %op2
-  ret i32  %op3
+  %op0 = load i32 , i32 * @b
+  ret i32  %op0
 }
