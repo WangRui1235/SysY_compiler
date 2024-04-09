@@ -373,26 +373,26 @@ ASTNode *AST::transform_node_iter(syntax_tree_node *n)
     {
         auto node = new ASTBlock();
         auto list_ptr = n->children[1];
-        std::queue<syntax_tree_node *> q;
+        std::stack<syntax_tree_node *> q;
         if (list_ptr->children_num == 2)
         {
             while (list_ptr->children_num == 2)
             {
-                q.push(list_ptr->children[0]);
-                list_ptr = list_ptr->children[1];
+                q.push(list_ptr->children[1]);
+                list_ptr = list_ptr->children[0];
             }
         }
         while (!q.empty())
         {
-            if (_STR_EQ(q.front()->children[0]->name, "Decl"))
+            if (_STR_EQ(q.top()->children[0]->name, "ConstDecl")||_STR_EQ(q.top()->children[0]->name, "VarDecl"))
             {
-                auto child_node = dynamic_cast<ASTVarDef *>(transform_node_iter(q.front()));
+                auto child_node = dynamic_cast<ASTVarDef *>(transform_node_iter(q.top()));
                 auto child_node_shared = std::shared_ptr<ASTVarDef>(child_node);
                 node->Stmts.push_back(child_node_shared);
             }
-            if (_STR_EQ(q.front()->children[0]->name, "Stmt"))
+            if (_STR_EQ(q.top()->children[0]->name, "Stmt"))
             {
-                auto child_node = dynamic_cast<ASTStmt *>(transform_node_iter(q.front()));
+                auto child_node = dynamic_cast<ASTStmt *>(transform_node_iter(q.top()->children[0]));
                 auto child_node_shared = std::shared_ptr<ASTStmt>(child_node);
                 node->Stmts.push_back(child_node_shared);
             }
