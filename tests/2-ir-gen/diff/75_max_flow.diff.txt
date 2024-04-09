@@ -1,4 +1,4 @@
---- /home/hq/SysY/tests/2-ir-gen/output/75_max_flow.txt	2024-04-09 07:15:28.293817904 +0000
+--- /home/hq/SysY/tests/2-ir-gen/output/75_max_flow.txt	2024-04-09 09:02:22.237523340 +0000
 +++ /home/hq/SysY/tests/testcases/functional/75_max_flow.out	2024-04-09 07:14:00.933296906 +0000
 @@ -1 +1,2 @@
 -139

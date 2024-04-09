@@ -1,4 +1,4 @@
---- /home/hq/SysY/tests/2-ir-gen/output/50_short_circuit.txt	2024-04-09 07:15:22.157781312 +0000
+--- /home/hq/SysY/tests/2-ir-gen/output/50_short_circuit.txt	2024-04-09 09:02:15.613699747 +0000
 +++ /home/hq/SysY/tests/testcases/functional/50_short_circuit.out	2024-04-09 07:14:00.933296906 +0000
 @@ -1 +1,2 @@
 -111112100

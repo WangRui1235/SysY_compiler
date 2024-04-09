@@ -1,4 +1,4 @@
---- /home/hq/SysY/tests/2-ir-gen/output/63_big_int_mul.txt	2024-04-09 07:15:25.505801279 +0000
+--- /home/hq/SysY/tests/2-ir-gen/output/63_big_int_mul.txt	2024-04-09 09:02:18.937611255 +0000
 +++ /home/hq/SysY/tests/testcases/functional/63_big_int_mul.out	2024-04-09 07:14:00.933296906 +0000
 @@ -1 +1,2 @@
 -127

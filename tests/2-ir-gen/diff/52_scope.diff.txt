@@ -1,4 +1,4 @@
---- /home/hq/SysY/tests/2-ir-gen/output/52_scope.txt	2024-04-09 07:15:22.797785127 +0000
+--- /home/hq/SysY/tests/2-ir-gen/output/52_scope.txt	2024-04-09 09:02:16.033688571 +0000
 +++ /home/hq/SysY/tests/testcases/functional/52_scope.out	2024-04-09 07:14:00.933296906 +0000
 @@ -1 +1,2 @@
 -10

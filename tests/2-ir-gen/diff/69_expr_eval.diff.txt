@@ -1,4 +1,4 @@
---- /home/hq/SysY/tests/2-ir-gen/output/69_expr_eval.txt	2024-04-09 07:15:26.821809126 +0000
+--- /home/hq/SysY/tests/2-ir-gen/output/69_expr_eval.txt	2024-04-09 09:02:20.529568853 +0000
 +++ /home/hq/SysY/tests/testcases/functional/69_expr_eval.out	2024-04-09 07:14:00.933296906 +0000
 @@ -1 +1,8 @@
 -127

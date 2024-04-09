@@ -1,4 +1,4 @@
---- /home/hq/SysY/tests/2-ir-gen/output/89_many_globals.txt	2024-04-09 07:15:31.557837371 +0000
+--- /home/hq/SysY/tests/2-ir-gen/output/89_many_globals.txt	2024-04-09 09:02:26.269415837 +0000
 +++ /home/hq/SysY/tests/testcases/functional/89_many_globals.out	2024-04-09 07:14:00.933296906 +0000
 @@ -1 +1,2 @@
 -28221180

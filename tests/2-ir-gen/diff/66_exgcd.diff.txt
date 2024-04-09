@@ -1,4 +1,4 @@
---- /home/hq/SysY/tests/2-ir-gen/output/66_exgcd.txt	2024-04-09 07:15:26.193805381 +0000
+--- /home/hq/SysY/tests/2-ir-gen/output/66_exgcd.txt	2024-04-09 09:02:19.761589311 +0000
 +++ /home/hq/SysY/tests/testcases/functional/66_exgcd.out	2024-04-09 07:14:00.933296906 +0000
 @@ -1 +1,2 @@
 -130

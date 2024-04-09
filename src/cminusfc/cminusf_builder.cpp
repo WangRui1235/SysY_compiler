@@ -696,7 +696,7 @@ void assignInitVal(AllocaInst *alloca, Type *lValType, bool isConstant, InitItem
         // 处理成功，下标++ end
     }
 }
-
+bool get_const;  
 Value *CminusfBuilder::visit(ASTVarDef &node)
 {
     //    struct ASTVarDef : ASTGlobalDef, ASTStmt
@@ -723,7 +723,7 @@ Value *CminusfBuilder::visit(ASTVarDef &node)
     if (scope.in_global())
     {
         GlobalVariable *global_alloca;
-        bool get_const = false;
+         get_const = false;
         // 显式初始化
         if (node.is_init)
         {
@@ -745,6 +745,31 @@ Value *CminusfBuilder::visit(ASTVarDef &node)
         // 常量插入常量表
         if (node.is_constant)
             Insert(name, global_alloca->get_init());
+    }
+    else
+    {
+        // 分配空间并插入符号表
+        auto alloca = builder->create_alloca(lValType);
+        scope.push(name, alloca);
+        // 初始化
+        if (node.is_init)
+        {
+            // 进入InitVal
+            if (node.is_constant)
+                get_const = true;
+            node.init_val->accept(*this);
+            get_const = false;
+
+            std::vector<int> indexList;
+            indexList.clear();
+            indexMax.clear();
+            depth = 0;
+            assignInitVal(alloca, lValType, node.is_constant, recentInitItem, &*builder, module.get(), true);
+            if (node.is_constant)
+            {
+                Insert(name, parseConst(0, 0, lValType));
+            }
+        }
     }
     return nullptr;
 }

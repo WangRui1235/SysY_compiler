@@ -1,4 +1,4 @@
---- /home/hq/SysY/tests/2-ir-gen/output/73_int_io.txt	2024-04-09 07:15:27.673814207 +0000
+--- /home/hq/SysY/tests/2-ir-gen/output/73_int_io.txt	2024-04-09 09:02:21.465543913 +0000
 +++ /home/hq/SysY/tests/testcases/functional/73_int_io.out	2024-04-09 07:14:00.933296906 +0000
 @@ -1 +1,6 @@
 -127

@@ -1,4 +1,4 @@
---- /home/hq/SysY/tests/2-ir-gen/output/56_sort_test2.txt	2024-04-09 07:15:23.909791759 +0000
+--- /home/hq/SysY/tests/2-ir-gen/output/56_sort_test2.txt	2024-04-09 09:02:17.069660995 +0000
 +++ /home/hq/SysY/tests/testcases/functional/56_sort_test2.out	2024-04-09 07:14:00.933296906 +0000
 @@ -1 +1,11 @@
 -127

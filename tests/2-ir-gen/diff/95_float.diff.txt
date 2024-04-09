@@ -1,4 +1,4 @@
---- /home/hq/SysY/tests/2-ir-gen/output/95_float.txt	2024-04-09 07:15:32.773844624 +0000
+--- /home/hq/SysY/tests/2-ir-gen/output/95_float.txt	2024-04-09 09:02:27.605380196 +0000
 +++ /home/hq/SysY/tests/testcases/functional/95_float.out	2024-04-09 07:14:00.933296906 +0000
 @@ -1 +1,19 @@
 -127

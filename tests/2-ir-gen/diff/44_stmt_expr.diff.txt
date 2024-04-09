@@ -1,4 +1,4 @@
---- /home/hq/SysY/tests/2-ir-gen/output/44_stmt_expr.txt	2024-04-09 07:15:20.741772868 +0000
+--- /home/hq/SysY/tests/2-ir-gen/output/44_stmt_expr.txt	2024-04-09 09:02:14.049741364 +0000
 +++ /home/hq/SysY/tests/testcases/functional/44_stmt_expr.out	2024-04-09 07:14:00.933296906 +0000
 @@ -1 +1,2 @@
 -10240
