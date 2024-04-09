@@ -384,11 +384,69 @@ ASTNode *AST::transform_node_iter(syntax_tree_node *n)
         }
         while (!q.empty())
         {
-            if (_STR_EQ(q.top()->children[0]->name, "ConstDecl")||_STR_EQ(q.top()->children[0]->name, "VarDecl"))
+            if (_STR_EQ(q.top()->children[0]->name, "ConstDecl"))
             {
-                auto child_node = dynamic_cast<ASTVarDef *>(transform_node_iter(q.top()));
-                auto child_node_shared = std::shared_ptr<ASTVarDef>(child_node);
-                node->Stmts.push_back(child_node_shared);
+
+                auto childnode = q.top()->children[0];
+                auto vardeflistnode = childnode->children[2];
+                std::stack<syntax_tree_node *> node_stack;
+                while (vardeflistnode->children_num == 3)
+                {
+                    node_stack.push(vardeflistnode->children[2]);
+                    vardeflistnode = vardeflistnode->children[0];
+                }
+                node_stack.push(vardeflistnode->children[0]);
+                while (!node_stack.empty())
+                {
+                    auto child_node = dynamic_cast<ASTVarDef *>(transform_node_iter(node_stack.top()));
+                    auto child_node_shared = std::shared_ptr<ASTVarDef>(child_node);
+                    node->Stmts.push_back(child_node_shared);
+                    node_stack.pop();
+                }
+                for (auto decl : node->Stmts)
+                {
+                    ASTVarDef *var_def = dynamic_cast<ASTVarDef *>(decl.get());
+
+                    var_def->is_constant = true;
+                    if (_STR_EQ(n->children[1]->name, "int"))
+                    {
+                        var_def->type_ = TYPE_INT;
+                    }
+                    else
+                    {
+                        var_def->type_ = TYPE_FLOAT;
+                    }
+                }
+            }
+            else if (_STR_EQ(q.top()->children[0]->name, "VarDecl"))
+            {
+
+                auto childnode = q.top()->children[0];
+                auto vardeflistnode = childnode->children[1];
+                while (vardeflistnode->children_num == 3)
+                {
+                    auto node_vardef = std::shared_ptr<ASTVarDef>(dynamic_cast<ASTVarDef *>(transform_node_iter(vardeflistnode->children[2])));
+                    if (_STR_EQ(n->children[0]->name, "int"))
+                    {
+                        node_vardef->type_ = TYPE_INT;
+                    }
+                    else
+                    {
+                        node_vardef->type_ = TYPE_FLOAT;
+                    }
+                    node->Stmts.push_back(node_vardef);
+                    vardeflistnode = vardeflistnode->children[0];
+                }
+                auto node_vardef = std::shared_ptr<ASTVarDef>(dynamic_cast<ASTVarDef *>(transform_node_iter(vardeflistnode->children[0])));
+
+                if (_STR_EQ(n->children[0]->name, "int"))
+                {
+                    node_vardef->type_ = TYPE_INT;
+                }
+                else
+                {
+                    node_vardef->type_ = TYPE_FLOAT;
+                }
             }
             if (_STR_EQ(q.top()->children[0]->name, "Stmt"))
             {
@@ -468,22 +526,30 @@ ASTNode *AST::transform_node_iter(syntax_tree_node *n)
             return node;
         }
     }
-    // LVal : Ident Explist
-    // Explist : LBRACKET Exp RBRACKET Explist | ε
+    // LVal : Ident ArrayExpList
+    /*      ArrayExpList:  ArrayExpList LBRACKET Exp RBRACKET
+    {
+        $$ = node("ArrayExpList", 4, $1, $2, $3, $4);
+    }
+    |
+    {
+        $$ = node("ArrayExpList",  0);
+    } */
     else if (_STR_EQ(n->name, "LVal"))
     {
         auto node = new ASTLVal();
         node->id = n->children[0]->name;
-        auto n_explist = n->children[1];
+        auto child_node = n->children[1];
 
-        while (n_explist->children_num == 4)
+        while (child_node->children_num == 4)
         {
-            auto child_node = static_cast<ASTExp *>(transform_node_iter(n_explist->children[1]));
-            auto child_node_shared = std::shared_ptr<ASTExp>(child_node);
-            node->Exps.push_back(child_node_shared);
-            n_explist = n_explist->children[3];
+            auto child_node2 = static_cast<ASTAddExp *>(transform_node_iter(child_node->children[2]));
+            auto child_node2_shared = std::shared_ptr<ASTAddExp>(child_node2);
+            node->Exps.push_back(child_node2_shared);
+            child_node = child_node->children[0];
         }
-
+        // 把数组长度倒序
+        std::reverse(node->Exps.begin(), node->Exps.end());
         return node;
     }
 

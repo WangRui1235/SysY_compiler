@@ -11,7 +11,7 @@
             "program":   "${workspaceFolder}/build/cminusfc",
             "args": [
                 "-emit-llvm",
-                "${workspaceFolder}/tests/func/lv0_1/08_global_arr_init.sy"
+                "${workspaceFolder}/tests/testcases/functional/74_kmp.sy"
             ],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
