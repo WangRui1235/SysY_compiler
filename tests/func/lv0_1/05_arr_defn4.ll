@@ -1,7 +1,6 @@
 ; ModuleID = 'cminus'
-source_filename = "/home/hq/SysY/tests/func/functional/08_const_array_defn.sy"
+source_filename = "/home/hq/SysY/tests/func/lv0_1/05_arr_defn4.sy"
 
-@a = constant [5 x i32 ] [i32  0, i32  1, i32  2, i32  3, i32  4]
 declare i32  @getint()
 
 declare i8  @getch()
@@ -26,7 +25,5 @@ declare void @putfarray(float)
 
 define i32  @main() {
 label_entry:
-  %op0 = getelementptr [5 x i32 ], [5 x i32 ]* @a, i32  0, i32  4
-  %op1 = load i32 , i32 * %op0
-  ret i32  %op1
+  ret i32  0
 }

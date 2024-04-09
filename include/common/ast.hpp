@@ -168,6 +168,7 @@ struct  ASTInitVal : ASTNode
 {
     virtual Value *accept(ASTVisitor &) override final;
     virtual ~ASTInitVal() = default;
+    bool is_exp;
     std::shared_ptr<ASTExp> expression;
     std::vector<std::shared_ptr<ASTInitVal>> init_vals;
 };

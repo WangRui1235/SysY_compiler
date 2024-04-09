@@ -1,7 +1,7 @@
 ; ModuleID = 'cminus'
 source_filename = "/home/hq/SysY/tests/func/lv0_1/03_arr_defn2.sy"
 
-@a = global [100 x i32 ] zeroinitializer
+@a = global [10 x [10 x i32 ]] zeroinitializer
 declare i32  @getint()
 
 declare i8  @getch()

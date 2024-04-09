@@ -92,21 +92,6 @@ Value *CminusfBuilder::visit(ASTSTARTPOINT &node)
     return ret_val;
 }
 
-Value *CminusfBuilder::visit(ASTInitVal &node)
-{
-    if (node.expression == nullptr)
-    {
-
-        Value *ret_val = nullptr;
-        for (auto &init_val : node.init_vals)
-        {
-            ret_val = init_val->accept(*this);
-        }
-        return ret_val;
-    }
-    return node.expression->accept(*this);
-}
-
 Value *CminusfBuilder::visit(ASTFuncDef &node)
 {
     FunctionType *fun_type = nullptr;
@@ -473,7 +458,31 @@ InitItem recentInitItem;
 std::vector<Value *> tmpfor0;
 Constant **tmpforconst;
 Type *realType;
-void Assign(Value *target, Value *val ,IRBuilder *builder)
+
+Value *CminusfBuilder::visit(ASTInitVal &node)
+{
+    InitItem newItem;
+    if (node.is_exp)
+    {
+        newItem.expr = node.expression->accept(*this);
+        newItem.isValue = true;
+    }
+    else
+    {
+        std::vector<InitItem> tmp;
+        for (auto element = node.init_vals.rbegin(); element != node.init_vals.rend(); element++)
+        {
+            element->get()->accept(*this);
+            tmp.push_back(recentInitItem);
+        }
+        newItem.isValue = false;
+        newItem.list = tmp;
+    }
+    recentInitItem = newItem;
+    return nullptr;
+}
+
+void Assign(Value *target, Value *val, IRBuilder *builder)
 {
     Type *target_type;
 
@@ -504,7 +513,7 @@ void Assign(Value *target, Value *val ,IRBuilder *builder)
         builder->create_store(val, target);
     }
 }
-void SetZero(AllocaInst *alloca, std::size_t nowdepth,  IRBuilder* builder, Module *module)
+void SetZero(AllocaInst *alloca, std::size_t nowdepth, IRBuilder *builder, Module *module)
 {
     if (nowdepth == indexMax.size())
     {
@@ -539,7 +548,7 @@ Constant *parseConst(int nowdepth, int offset, Type *type)
     return ConstantArray::get((ArrayType *)type, tmp);
 }
 
-void assignInitVal(AllocaInst *alloca, Type *lValType, bool isConstant, InitItem initVal,IRBuilder *builder , Module *module, bool firsttime)
+void assignInitVal(AllocaInst *alloca, Type *lValType, bool isConstant, InitItem initVal, IRBuilder *builder, Module *module, bool firsttime)
 {
     if (firsttime)
     {
@@ -580,7 +589,7 @@ void assignInitVal(AllocaInst *alloca, Type *lValType, bool isConstant, InitItem
         for (unsigned int i = 0; i < initVal.list.size(); i++)
         {
             int beforepos = indexList[depth - 1];
-            assignInitVal(alloca, lValType->get_array_element_type(), isConstant, initVal.list[i], &*builder,  module, false);
+            assignInitVal(alloca, lValType->get_array_element_type(), isConstant, initVal.list[i], &*builder, module, false);
 
             bool upmatch = false;
             if (beforepos == indexList[depth - 1])
@@ -619,7 +628,7 @@ void assignInitVal(AllocaInst *alloca, Type *lValType, bool isConstant, InitItem
         if (depth < indexMax.size()) // 给的初始值深度不够，自动加深
         {
             depth++;
-            assignInitVal(alloca, lValType->get_array_element_type(), isConstant, initVal, &*builder,  module, false);
+            assignInitVal(alloca, lValType->get_array_element_type(), isConstant, initVal, &*builder, module, false);
             depth--;
             return;
         }
@@ -635,10 +644,10 @@ void assignInitVal(AllocaInst *alloca, Type *lValType, bool isConstant, InitItem
                     indexListforGep.push_back(ConstantInt::get(indexList[i], module));
                 }
                 auto aGep = builder->create_gep(alloca, indexListforGep);
-                Assign(aGep, initVal.expr ,&*builder);
+                Assign(aGep, initVal.expr, &*builder);
             }
             else
-                Assign(alloca, initVal.expr ,&*builder);
+                Assign(alloca, initVal.expr, &*builder);
         }
         Constant *tmp;
         if (isConstant)
@@ -725,7 +734,7 @@ Value *CminusfBuilder::visit(ASTVarDef &node)
             indexList.clear();
             indexMax.clear();
             depth = 0;
-            assignInitVal(NULL, lValType, true, recentInitItem, &*builder,   module.get(), true);
+            assignInitVal(NULL, lValType, true, recentInitItem, &*builder, module.get(), true);
             global_alloca = GlobalVariable::create(name, module.get(), lValType, node.is_constant, parseConst(0, 0, lValType));
         }
         // 未初始化，全局变量也需要赋值为0

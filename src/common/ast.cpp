@@ -164,7 +164,77 @@ ASTNode *AST::transform_node_iter(syntax_tree_node *n)
         }
         // 把数组长度倒序
         std::reverse(node->arr_len.begin(), node->arr_len.end());
+
         return node;
+    }
+    /*
+    InitVal: Exp
+    {
+        $$ = node("InitVal", 1, $1);
+    }
+
+    | LBRACE InitValList RBRACE
+    {
+        $$ = node("InitVal", 3, $1, $2, $3);
+    } */
+    /*
+    InitValList: InitValList  COMMA  InitVal
+    {
+    $$ = node("InitValList", 3, $1, $2, $3);
+    }
+    | InitVal
+    {
+    $$ = node("InitValList", 1, $1);
+    }
+    |
+    {
+    $$ = node("InitValList", 0);
+    }
+    */
+    else if (_STR_EQ(n->name, "InitVal"))
+    {
+        auto node = new ASTInitVal();
+        if (n->children_num == 1)
+        {
+            node->is_exp = true;
+            node->expression = std::shared_ptr<ASTExp>(static_cast<ASTExp *>(transform_node_iter(n->children[0])));
+            return node;
+        }
+        else
+        {
+            node->is_exp = false;
+            auto child_node = n->children[1];
+            if (child_node->children_num == 1 && _STR_EQ(child_node->children[0]->name, "InitVal"))
+            {
+                auto child_node2 = static_cast<ASTInitVal *>(transform_node_iter(child_node->children[0]));
+                auto child_node2_shared = std::shared_ptr<ASTInitVal>(child_node2);
+                node->init_vals.push_back(child_node2_shared);
+                return node;
+            }
+            if (child_node->children_num == 1 && _STR_EQ(child_node->children[0]->name, "epsilon"))
+            {
+                return node;
+            }
+            while (child_node->children_num == 3)
+            {
+                auto child_node2 = static_cast<ASTInitVal *>(transform_node_iter(child_node->children[2]));
+                auto child_node2_shared = std::shared_ptr<ASTInitVal>(child_node2);
+                node->init_vals.push_back(child_node2_shared);
+                child_node = child_node->children[0];
+                if (child_node->children_num == 1 && _STR_EQ(child_node->children[0]->name, "InitVal"))
+                {
+                    auto child_node2 = static_cast<ASTInitVal *>(transform_node_iter(child_node->children[0]));
+                    auto child_node2_shared = std::shared_ptr<ASTInitVal>(child_node2);
+                    node->init_vals.push_back(child_node2_shared);
+                    break;
+                }
+                if (child_node->children_num == 1 && _STR_EQ(child_node->children[0]->name, "epsilon"))
+                {
+                    break;
+                }
+            }
+            return node;
+        }
     }
     /*
     FuncDef:   INT Ident LPAREN FuncFParams RPAREN Block
@@ -239,7 +309,7 @@ ASTNode *AST::transform_node_iter(syntax_tree_node *n)
         auto node_child = n->children[3];
         // FuncFParams : FuncFParams COMMA FuncFParam | FuncFParam
         // 构建stack
-        std::stack<syntax_tree_node *> q; 
+        std::stack<syntax_tree_node *> q;
         while (node_child->children_num == 3)
         {
             q.push(node_child->children[2]);
@@ -316,9 +386,15 @@ ASTNode *AST::transform_node_iter(syntax_tree_node *n)
         {
             if (_STR_EQ(q.front()->children[0]->name, "Decl"))
             {
+                auto child_node = dynamic_cast<ASTVarDef *>(transform_node_iter(q.front()));
+                auto child_node_shared = std::shared_ptr<ASTVarDef>(child_node);
+                node->Stmts.push_back(child_node_shared);
             }
             if (_STR_EQ(q.front()->children[0]->name, "Stmt"))
             {
+                auto child_node = dynamic_cast<ASTStmt *>(transform_node_iter(q.front()));
+                auto child_node_shared = std::shared_ptr<ASTStmt>(child_node);
+                node->Stmts.push_back(child_node_shared);
             }
             q.pop();
         }
