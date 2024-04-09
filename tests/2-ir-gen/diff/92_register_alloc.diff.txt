@@ -1,6 +1,0 @@
---- /home/hq/SysY/tests/2-ir-gen/output/92_register_alloc.txt	2024-04-09 09:02:26.913398658 +0000
-+++ /home/hq/SysY/tests/testcases/functional/92_register_alloc.out	2024-04-09 07:14:00.933296906 +0000
-@@ -1 +1,2 @@
--194194
-+194
-+194

@@ -1,6 +1,0 @@
---- /home/hq/SysY/tests/2-ir-gen/output/39_op_priority5.txt	2024-04-09 09:02:12.885772322 +0000
-+++ /home/hq/SysY/tests/testcases/functional/39_op_priority5.out	2024-04-09 07:14:00.933296906 +0000
-@@ -1 +1,2 @@
--11
-+1
-+1

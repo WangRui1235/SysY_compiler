@@ -1,5 +1,5 @@
---- /home/hq/SysY/tests/2-ir-gen/output/05_arr_defn4.txt	2024-04-09 09:02:05.405971098 +0000
-+++ /home/hq/SysY/tests/testcases/functional/05_arr_defn4.out	2024-04-09 07:14:00.933296906 +0000
+--- /home/hq/SysY/tests/2-ir-gen/output/05_arr_defn4.txt	2024-04-09 09:26:02.217571034 +0000
++++ /home/hq/SysY/tests/testcases/func/05_arr_defn4.out	2024-04-09 09:24:53.977959658 +0000
 @@ -1 +1 @@
 -127
 +21

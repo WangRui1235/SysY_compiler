@@ -1,5 +1,5 @@
---- /home/hq/SysY/tests/2-ir-gen/output/84_long_array2.txt	2024-04-09 09:02:24.773455734 +0000
-+++ /home/hq/SysY/tests/testcases/functional/84_long_array2.out	2024-04-09 07:14:00.933296906 +0000
+--- /home/hq/SysY/tests/2-ir-gen/output/84_long_array2.txt	2024-04-09 09:26:04.569423071 +0000
++++ /home/hq/SysY/tests/testcases/func/84_long_array2.out	2024-04-09 09:24:54.121950196 +0000
 @@ -1 +1,2 @@
 -127
 +3
