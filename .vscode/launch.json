@@ -11,8 +11,8 @@
             "program":   "${workspaceFolder}/build/cminusfc",
             "args": [
                 "-emit-llvm",
-                "${workspaceFolder}/tests/testcases/functional/21_if_test2.sy"
-        
+                "${workspaceFolder}/tests/testcases/functional/78_side_effect.sy"
+       
             ],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",

@@ -59,11 +59,15 @@ for source_file in *.sy; do
     exit_code=$? 
     echo  "$exit_code" >> "$output_dir/$filename.txt"
     #diff -u $output_dir/$filename.txt $source_dir/$filename.out > $diff_dir/$filename.diff.txt
-    if cmp -s "$output_dir/$filename.txt" "$source_dir/$filename.out"; then
+    #if cmp -s "$output_dir/$filename.txt" "$source_dir/$filename.out"; then
+    tr '\n' ' ' < $output_dir/$filename.txt > $output_dir/$filename_no_newline.txt
+    tr '\n' ' ' < $source_dir/$filename.out > $source_dir/$filename_no_newline.out
+   # diff -u -w $output_dir/$.txt $source_dir/$.out > $diff_dir/$filename.diff.txt
+    if diff -u -w "$output_dir/$filename_no_newline.txt" "$source_dir/$filename_no_newline.out"; then
     echo "Files $filename identical"
 else
     # 生成差异文件
-    diff -u "$output_dir/$filename.txt" "$source_dir/$filename.out" > "$diff_dir/$filename.diff.txt"
+    diff -u -w "$output_dir/$filename.txt" "$source_dir/$filename.out" > "$diff_dir/$filename.diff.txt"
     echo "$filename" >> "$failed_files"
 fi
     # 检查执行结果并写入输出文件

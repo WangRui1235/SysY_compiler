@@ -67,7 +67,7 @@ std::vector<int> indexList;
 // 将变常量插入符号表
 bool Insert(std::string name, Constant *val)
 {
-    //插入到当前作用域的符号表
+    // 插入到当前作用域的符号表
     auto result = const_table.front().insert(std::pair<std::string, Constant *>(name, val));
     return result.second;
 }
@@ -82,6 +82,44 @@ void delete_table()
 {
     const_table.pop_front();
     return;
+}
+
+void Assign(Value *target, Value *val, IRBuilder *builder)
+{
+    Type *target_type;
+
+    if (dynamic_cast<GlobalVariable *>(target))
+    {
+        target_type = ((GlobalVariable *)target)->get_type(); // 指针
+        target_type = ((PointerType *)target_type)->get_element_type();
+    }
+    else
+    {
+        target_type = ((AllocaInst *)target)->get_alloca_type();
+    }
+
+    // int=float
+    if (val->get_type() == FLOAT_T && (target_type == INT32_T))
+    {
+        auto tmp = builder->create_fptosi(val, INT32_T);
+        builder->create_store(tmp, target);
+    }
+    // float=int
+    else if (val->get_type() == INT32_T && target_type == FLOAT_T)
+    {
+        auto tmp = builder->create_sitofp(val, FLOAT_T);
+        builder->create_store(tmp, target);
+    }
+    else if (val->get_type() == INT8_T && target_type == INT32_T)
+    {
+        // 需要i8转换成i32
+        auto tmp = builder->create_zext(val, INT32_T);
+        builder->create_store(tmp, target);
+    }
+    else
+    {
+        builder->create_store(val, target);
+    }
 }
 /*
  * use CMinusfBuilder::Scope to construct scopes
@@ -392,15 +430,19 @@ Value *CminusfBuilder::visit(ASTIfStmt &node)
 
 Value *CminusfBuilder::visit(ASTAssignExpression &node)
 {
-    auto *expr_result = node.expression->accept(*this);
+    /*auto *expr_result = node.expression->accept(*this);
     context.require_lvalue = true;
     auto *var_addr = node.var->accept(*this);
+
     if (var_addr->get_type()->get_pointer_element_type() !=
         expr_result->get_type())
     {
+
         if (expr_result->get_type() == INT32_T)
         {
-            expr_result = builder->create_sitofp(expr_result, FLOAT_T);
+           expr_result = builder->create_store(expr_result, var_addr);
+           return expr_result;
+           // expr_result = builder->create_sitofp(expr_result, FLOAT_T);
         }
         else if (expr_result->get_type() == INT8_T && var_addr->get_type()->get_pointer_element_type() == INT32_T)
         {
@@ -413,7 +455,12 @@ Value *CminusfBuilder::visit(ASTAssignExpression &node)
         }
     }
     builder->create_store(expr_result, var_addr);
-    return expr_result;
+    return expr_result;*/
+    auto val = node.expression->accept(*this);
+    context.require_lvalue = true;
+    auto target = node.var->accept(*this);
+
+    Assign(target, val, &*builder);
 }
 
 Value *CminusfBuilder::visit(ASTReturnStmt &node)
@@ -460,7 +507,6 @@ Value *CminusfBuilder::visit(ASTBreakStmt &node)
     return builder->create_br(nextBB_while);
 }
 
-
 // 初始化向量
 typedef struct InitItem
 {
@@ -496,37 +542,6 @@ Value *CminusfBuilder::visit(ASTInitVal &node)
     return nullptr;
 }
 
-void Assign(Value *target, Value *val, IRBuilder *builder)
-{
-    Type *target_type;
-
-    if (dynamic_cast<GlobalVariable *>(target))
-    {
-        target_type = ((GlobalVariable *)target)->get_type(); // 指针
-        target_type = ((PointerType *)target_type)->get_element_type();
-    }
-    else
-    {
-        target_type = ((AllocaInst *)target)->get_alloca_type();
-    }
-
-    // int=float
-    if (val->get_type() == FLOAT_T && (target_type == INT32_T))
-    {
-        auto tmp = builder->create_fptosi(val, INT32_T);
-        builder->create_store(tmp, target);
-    }
-    // float=int
-    else if (val->get_type() == INT32_T && target_type == FLOAT_T)
-    {
-        auto tmp = builder->create_sitofp(val, FLOAT_T);
-        builder->create_store(tmp, target);
-    }
-    else
-    {
-        builder->create_store(val, target);
-    }
-}
 void SetZero(AllocaInst *alloca, std::size_t nowdepth, IRBuilder *builder, Module *module)
 {
     if (nowdepth == indexMax.size())
@@ -795,7 +810,7 @@ Value *CminusfBuilder::visit(ASTExpStmt &node)
 {
     return node.expression->accept(*this);
 }
- 
+
 Value *CminusfBuilder::visit(ASTBlock &node)
 {
     bool need_exit_scope = !context.pre_enter_scope;
@@ -808,7 +823,7 @@ Value *CminusfBuilder::visit(ASTBlock &node)
         scope.enter();
         make_new_table();
     }
-  
+
     for (auto &stmt : node.Stmts)
     {
 
@@ -947,6 +962,7 @@ Value *CminusfBuilder::visit(ASTLVal &node)
             }
         }
         recent_ptr = temp;
+        ret_val = temp;
         if (lValType->is_array_type())
             ret_val = builder->create_gep(temp, {CONST_INT(0), CONST_INT(0)});
         else if (!should_return_lval)
@@ -983,19 +999,21 @@ Value *CminusfBuilder::visit(ASTUnaryExp &node)
         if (node.unary_op == OP_NEG)
         {
             auto *val = node.unary_exp->accept(*this);
+            Value *ret_val = nullptr;
+
             if (val->get_type()->is_integer_type())
             {
                 if (val->get_type()->is_int1_type())
                 {
                     val = builder->create_zext(val, INT32_T);
                 }
-                val = builder->create_imul(val, CONST_INT(-1));
+                ret_val = builder->create_isub(CONST_INT(0), val);
             }
             else
             {
-                val = builder->create_fmul(val, CONST_FP(-1));
+                ret_val = builder-> create_fsub(CONST_FP(0.), val);
             }
-            return val;
+            return ret_val;
         }
         else if (node.unary_op == OP_NOT)
         {

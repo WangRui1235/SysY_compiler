@@ -182,7 +182,7 @@ struct ASTFuncFParam : ASTNode
     SysYType type;
     std::string id;
     bool isarray;
-    std::vector<std::shared_ptr<ASTExp>> Exps;
+    std::vector<std::shared_ptr<ASTAddExp>> Exps;
 };
 
 struct ASTBlock : ASTStmt

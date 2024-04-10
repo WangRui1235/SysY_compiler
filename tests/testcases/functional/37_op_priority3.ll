@@ -30,11 +30,9 @@ label_entry:
   store i32  10, i32 * %op1
   store i32  30, i32 * %op0
   %op2 = load i32 , i32 * %op1
-  %op3 = mul i32  5, -1
-  %op4 = sub i32  %op2, %op3
-  %op5 = load i32 , i32 * %op0
-  %op6 = add i32  %op4, %op5
-  %op7 = mul i32  5, -1
-  %op8 = add i32  %op6, %op7
-  ret i32  %op8
+  %op3 = sub i32  %op2, -5
+  %op4 = load i32 , i32 * %op0
+  %op5 = add i32  %op3, %op4
+  %op6 = add i32  %op5, -5
+  ret i32  %op6
 }

@@ -334,7 +334,19 @@ ASTNode *AST::transform_node_iter(syntax_tree_node *n)
     }
     else if (_STR_EQ(n->name, "FuncFParam"))
     {
+        /*
+         FuncFParam: INT Ident
+    | FLOAT Ident
+    | INT Ident   ArrayParamList
+    | FLOAT Ident   ArrayParamList
+
+
+    ArrayParamList:ArrayParamList LBRACKET Exp RBRACKET
+    | LBRACKET Exp RBRACKET
+    | LBRACKET RBRACKET
+    */
         auto node = new ASTFuncFParam();
+
         if (_STR_EQ(n->children[0]->name, "int"))
         {
             node->type = TYPE_INT;
@@ -347,29 +359,36 @@ ASTNode *AST::transform_node_iter(syntax_tree_node *n)
         {
             node->type = TYPE_VOID;
         }
-        if (n->children_num > 2 && n->children[2]->name[0] == '[')
-            node->isarray = true;
         node->id = n->children[1]->name;
-        if (n->children_num == 5)
+        if (n->children_num == 2)
         {
-            std::queue<syntax_tree_node *> q;
-            auto list_ptr = n->children[4];
-            if (list_ptr->children_num == 4)
+            return node;
+        }
+
+        node->isarray = true;
+        auto child_node = n->children[2];
+        if (child_node->children_num == 2)
+        {
+            return node;
+        }
+
+        while (child_node->children_num == 4)
+        {
+
+            auto child_node2 = static_cast<ASTAddExp *>(transform_node_iter(child_node->children[2]->children[0]));
+            auto child_node2_shared = std::shared_ptr<ASTAddExp>(child_node2);
+            node->Exps.push_back(child_node2_shared);
+            child_node = child_node->children[0];
+            if (child_node->children_num == 3)
             {
-                while (list_ptr->children_num == 4)
-                {
-                    q.push(list_ptr->children[1]);
-                    list_ptr = list_ptr->children[3];
-                }
-            }
-            while (!q.empty())
-            {
-                auto child_node = static_cast<ASTExp *>(transform_node_iter(q.front()->children[0])); // “先进”
-                auto child_node_shared = std::shared_ptr<ASTExp>(child_node);
-                node->Exps.push_back(child_node_shared);
-                q.pop();
+                auto child_node2 = static_cast<ASTAddExp *>(transform_node_iter(child_node->children[1]->children[0]));
+                auto child_node2_shared = std::shared_ptr<ASTAddExp>(child_node2);
+                node->Exps.push_back(child_node2_shared);
+                break;
             }
         }
+        // 把数组长度倒序
+        std::reverse(node->Exps.begin(), node->Exps.end());
         return node;
     }
     // Block: LBRACE BlockItemList RBRACE
@@ -677,6 +696,63 @@ ASTNode *AST::transform_node_iter(syntax_tree_node *n)
         else if (n->children_num == 2) // UnaryOp UnaryExp
         {
             auto node = new ASTUnaryExp();
+            // 判断-5这样的情况
+            if (_STR_EQ(n->children[0]->children[0]->name, "-") && n->children[1]->children_num == 1)
+            {
+                auto childnode = n->children[1]->children[0];
+                if (childnode->children_num == 1)
+                {
+                    if (!_STR_EQ(childnode->children[0]->name, "LVal"))
+                    {
+                        auto name = childnode->children[0]->name;
+                        auto num_node = new ASTNumber();
+                        num_node->type = TYPE_INT;
+                        // 把name转成数字后,判断是不是整数
+                        for (int i = 0; i < (int)(strlen(name)); i++)
+                        {
+                            if (name[i] == '.')
+                            {
+                                num_node->type = TYPE_FLOAT;
+                                break;
+                            }
+                        }
+                        if (num_node->type == TYPE_INT)
+                        // 判断是不是16进制
+                        {
+                            if (name[0] == '0' && (name[1] == 'x' || name[1] == 'X'))
+                            {
+                                // 取第二位到最后一位
+                                std::string str = std::string(name).substr(2);
+                                num_node->i_val = std::stoi(str, 0, 16);
+                            }
+                            // 长度大于1且第一位是0
+                            else if (name[0] == '0' && strlen(name) > 1)
+                            {
+                                std::string str = std::string(name).substr(1);
+                                num_node->i_val = std::stoi(str, 0, 8);
+                            }
+                            else
+                            {
+                                num_node->i_val = std::stoi(name);
+                            }
+                            if(node->unary_op == OP_NEG)
+                            {
+                                num_node->i_val = -num_node->i_val;
+                            }
+                        }
+                        else{
+                            num_node->f_val = std::stod(name);
+                            if(node->unary_op == OP_NEG)
+                            {
+                                num_node->f_val = -num_node->f_val;
+                            }
+                        }
+                        node->number = std::shared_ptr<ASTNumber>(num_node);
+
+                        return node;
+                    }
+                }
+            }
             if (_STR_EQ(n->children[0]->children[0]->name, "-"))
             {
                 node->unary_op = OP_NEG;
@@ -1050,7 +1126,6 @@ Value *ASTPrinter::visit(ASTExpStmt &node)
     remove_depth();
     return nullptr;
 }
- 
 
 Value *ASTPrinter::visit(ASTContinueStmt &node)
 {

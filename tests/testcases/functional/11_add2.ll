@@ -28,10 +28,9 @@ label_entry:
   %op0 = alloca i32 
   %op1 = alloca i32 
   store i32  10, i32 * %op1
-  %op2 = mul i32  1, -1
-  store i32  %op2, i32 * %op0
-  %op3 = load i32 , i32 * %op1
-  %op4 = load i32 , i32 * %op0
-  %op5 = add i32  %op3, %op4
-  ret i32  %op5
+  store i32  -1, i32 * %op0
+  %op2 = load i32 , i32 * %op1
+  %op3 = load i32 , i32 * %op0
+  %op4 = add i32  %op2, %op3
+  ret i32  %op4
 }
