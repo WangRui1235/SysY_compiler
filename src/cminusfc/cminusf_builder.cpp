@@ -791,6 +791,11 @@ Value *CminusfBuilder::visit(ASTFuncFParam &node)
 {
     return nullptr;
 }
+Value *CminusfBuilder::visit(ASTExpStmt &node)
+{
+    return node.expression->accept(*this);
+}
+ 
 Value *CminusfBuilder::visit(ASTBlock &node)
 {
     bool need_exit_scope = !context.pre_enter_scope;
@@ -905,6 +910,7 @@ Value *CminusfBuilder::visit(ASTLVal &node)
     Value *ret_val = nullptr;
     Value *recent_ptr = nullptr;
     auto temp = scope.find(node.id);
+    ret_val = temp;
     auto temp_const = Lookup(node.id);
     auto lValType = temp->get_type()->get_pointer_element_type();
     // 获取常量

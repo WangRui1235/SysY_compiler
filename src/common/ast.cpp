@@ -11,7 +11,7 @@
               << std::endl;                                \
     std::abort();
 #define _STR_EQ(a, b) (strcmp((a), (b)) == 0)
-int is_const=0;
+int is_const = 0;
 void AST::run_visitor(ASTVisitor &visitor) { root->accept(visitor); }
 AST::AST(syntax_tree *s)
 {
@@ -148,9 +148,10 @@ ASTNode *AST::transform_node_iter(syntax_tree_node *n)
         if (n->children_num == 4)
         {
             // 有初始化
-            if (is_const){
-                node->a=1;
-              //node->is_const_or_not = true;
+            if (is_const)
+            {
+                node->a = 1;
+                // node->is_const_or_not = true;
             }
             node->is_init = true;
             auto child_node = static_cast<ASTInitVal *>(transform_node_iter(n->children[3]));
@@ -391,23 +392,21 @@ ASTNode *AST::transform_node_iter(syntax_tree_node *n)
         {
             if (_STR_EQ(q.top()->children[0]->name, "ConstDecl"))
             {
-                is_const=1;
+                is_const = 1;
                 auto childnode = q.top()->children[0];
                 auto vardeflistnode = childnode->children[2];
                 if (vardeflistnode->children_num == 1)
                 {
-                    auto  node_vardef = std::shared_ptr<ASTVarDef>(dynamic_cast<ASTVarDef *>(transform_node_iter(vardeflistnode->children[0])));
+                    auto node_vardef = std::shared_ptr<ASTVarDef>(dynamic_cast<ASTVarDef *>(transform_node_iter(vardeflistnode->children[0])));
                     if (_STR_EQ(childnode->children[1]->name, "int"))
                     {
                         node_vardef->type_ = TYPE_INT;
-                        
                     }
                     else
                     {
                         node_vardef->type_ = TYPE_FLOAT;
-                      
                     }
-                  //  node_vardef->is_const_or_not = true;
+                    //  node_vardef->is_const_or_not = true;
                     node->Stmts.push_back(node_vardef);
                 }
                 while (vardeflistnode->children_num == 3)
@@ -440,7 +439,7 @@ ASTNode *AST::transform_node_iter(syntax_tree_node *n)
                         node->Stmts.push_back(node_vardef);
                     }
                 }
-         
+
                 /*
                                 auto childnode = q.top()->children[0];
                                 auto vardeflistnode = childnode->children[2];
@@ -472,7 +471,7 @@ ASTNode *AST::transform_node_iter(syntax_tree_node *n)
                                         var_def->type_ = TYPE_FLOAT;
                                     }
                                 } */
-                                is_const=0;
+                is_const = 0;
             }
             else if (_STR_EQ(q.top()->children[0]->name, "VarDecl"))
             {
@@ -507,9 +506,10 @@ ASTNode *AST::transform_node_iter(syntax_tree_node *n)
             }
             else if (_STR_EQ(q.top()->children[0]->name, "Stmt"))
             {
-                auto child_node = dynamic_cast<ASTStmt *>(transform_node_iter(q.top()->children[0]));
-                auto child_node_shared = std::shared_ptr<ASTStmt>(child_node);
-                node->Stmts.push_back(child_node_shared);
+                auto childnode = q.top()->children[0];
+                auto stmt_node = dynamic_cast<ASTStmt *>(transform_node_iter(childnode));
+                auto stmt_node_shared = std::shared_ptr<ASTStmt>(stmt_node);
+                node->Stmts.push_back(stmt_node_shared);
             }
             q.pop();
         }
@@ -567,8 +567,8 @@ ASTNode *AST::transform_node_iter(syntax_tree_node *n)
         }
         else if (_STR_EQ(n->children[0]->name, "Exp"))
         {
-            auto node = new ASTAddExp();
-            node->add_exp = std::shared_ptr<ASTAddExp>(static_cast<ASTAddExp *>(transform_node_iter(n->children[0]->children[0])));
+            auto node = new ASTExpStmt();
+            node->expression = std::shared_ptr<ASTAddExp>(static_cast<ASTAddExp *>(transform_node_iter(n->children[0])));
             return node;
         }
         else if (_STR_EQ(n->children[0]->name, "Block"))
@@ -888,6 +888,7 @@ Value *ASTContinueStmt::accept(ASTVisitor &visitor) { return visitor.visit(*this
 Value *ASTBreakStmt::accept(ASTVisitor &visitor) { return visitor.visit(*this); }
 Value *ASTWhileStmt::accept(ASTVisitor &visitor) { return visitor.visit(*this); }
 Value *ASTEmptyStmt::accept(ASTVisitor &visitor) { return visitor.visit(*this); }
+Value *ASTExpStmt::accept(ASTVisitor &visitor) { return visitor.visit(*this); }
 #define _DEBUG_PRINT_N_(N)                \
     {                                     \
         std::cout << std::string(N, '-'); \
@@ -1039,6 +1040,17 @@ Value *ASTPrinter::visit(ASTWhileStmt &node)
     remove_depth();
     return nullptr;
 }
+
+Value *ASTPrinter::visit(ASTExpStmt &node)
+{
+    _DEBUG_PRINT_N_(depth);
+    std::cout << "Expstmt" << std::endl;
+    add_depth();
+    node.expression->accept(*this);
+    remove_depth();
+    return nullptr;
+}
+ 
 
 Value *ASTPrinter::visit(ASTContinueStmt &node)
 {

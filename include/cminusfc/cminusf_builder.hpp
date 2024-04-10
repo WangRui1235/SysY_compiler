@@ -162,6 +162,7 @@ private:
     virtual Value *visit(ASTIfStmt &) override final;
     virtual Value *visit(ASTWhileStmt &) override final;
     virtual Value *visit(ASTBreakStmt &) override final;
+    virtual Value *visit(ASTExpStmt &) override final;
     virtual Value *visit(ASTContinueStmt &) override final;
     virtual Value *visit(ASTReturnStmt &) override final;
     virtual Value *visit(ASTEmptyStmt &) override final;

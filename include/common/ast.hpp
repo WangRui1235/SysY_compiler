@@ -93,8 +93,9 @@ struct ASTContinueStmt;
 struct ASTEmptyStmt;
 struct ASTIfStmt;
 struct ASTWhileStmt;
-struct ASTAssignExpression;
 struct ASTExpStmt;
+struct ASTAssignExpression;
+ 
 struct ASTFuncFParam;
 struct ASTNode;
 struct ASTBlock;
@@ -198,11 +199,7 @@ struct ASTAssignExpression : ASTStmt
     std::shared_ptr<ASTExp> expression;
 };
 
-struct ASTExpStmt : ASTStmt
-{
-    std::shared_ptr<ASTExp> exp; // 可选的表达式
-    // Exp SEMICOLON||SEMICOLON---->这里进行了整合
-};
+ 
 
 struct ASTEmptyStmt : ASTStmt
 {
@@ -224,6 +221,13 @@ struct ASTWhileStmt : ASTStmt
     std::shared_ptr<ASTLOrExp> expression;
     std::shared_ptr<ASTStmt> statement;
     int break_exist = 0;
+};
+
+struct ASTExpStmt : ASTStmt
+{
+    virtual Value *accept(ASTVisitor &) override final;
+    virtual ~ASTExpStmt() = default;
+    std::shared_ptr<ASTAddExp> expression;
 };
 
 struct ASTBreakStmt : ASTStmt
@@ -350,17 +354,15 @@ public:
     virtual Value *visit(ASTBlock &) = 0;
     virtual Value *visit(ASTIfStmt &) = 0;
     virtual Value *visit(ASTWhileStmt &) = 0;
+    virtual Value *visit(ASTExpStmt &) = 0;
     virtual Value *visit(ASTBreakStmt &) = 0;
     virtual Value *visit(ASTContinueStmt &) = 0;
     virtual Value *visit(ASTReturnStmt &) = 0;
     virtual Value *visit(ASTEmptyStmt &) = 0;
     virtual Value *visit(ASTAssignExpression &) = 0;
-
     virtual Value *visit(ASTLVal &) = 0;
-
     virtual Value *visit(ASTNumber &) = 0;
     virtual Value *visit(ASTUnaryExp &) = 0;
-
     virtual Value *visit(ASTMulExp &) = 0;
     virtual Value *visit(ASTAddExp &) = 0;
     virtual Value *visit(ASTRelExp &) = 0;
@@ -380,6 +382,7 @@ public:
     virtual Value *visit(ASTBlock &) override final;
     virtual Value *visit(ASTIfStmt &) override final;
     virtual Value *visit(ASTWhileStmt &) override final;
+    virtual Value *visit(ASTExpStmt &) override final;
     virtual Value *visit(ASTBreakStmt &) override final;
     virtual Value *visit(ASTContinueStmt &) override final;
     virtual Value *visit(ASTReturnStmt &) override final;
